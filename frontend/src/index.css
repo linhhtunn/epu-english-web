@@ -1,0 +1,41 @@
+/* ĐỊNH VỊ NÚT BẤM SÁT NGOÀI */
+.custom-nav-btn {
+    position: absolute;
+    top: 40%; /* Cân giữa theo chiều dọc của khối ảnh */
+    transform: translateY(-50%);
+    background: rgba(255, 255, 255, 0.15); /* Nền trắng cực mờ */
+    border: 1px solid rgba(255, 255, 255, 0.3);
+    color: white;
+    width: 50px;
+    height: 50px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.5rem;
+    z-index: 100;
+    transition: all 0.3s ease;
+    cursor: pointer;
+}
+
+.custom-nav-btn:hover {
+    background: rgba(255, 255, 255, 0.3);
+    color: #ef7d00; /* Đổi sang màu cam Apollo khi di chuột */
+    transform: translateY(-50%) scale(1.1);
+}
+
+.btn-prev {
+    left: 10px; /* Đẩy sát về lề trái nền xanh */
+}
+
+.btn-next {
+    right: 10px; /* Đẩy sát về lề phải nền xanh */
+}
+
+/* Đảm bảo icon mũi tên Bootstrap hiện ra (nếu bạn dùng Bootstrap Icons) */
+@import url("https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css");
+
+/* Hiệu ứng chuyển ảnh 1.5s mượt mà */
+.carousel-item {
+    transition: transform 0.6s ease-in-out;
+}

@@ -1,0 +1,148 @@
+import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
+import { AuthProvider, useAuth } from './context/AuthContext'; 
+import PrivateRoute from './routes/PrivateRoute';
+import MainLayout from './components/MainLayout'; 
+import AdminSchedule from './pages/admin/AdminSchedule';
+// Import Pages
+import Login from './pages/Login';
+import AdminDashboard from './pages/admin/AdminDashboard';
+import TeacherDashboard from './pages/teacher/TeacherDashboard';
+import TeacherSchedule from './pages/teacher/TeacherSchedule'; 
+import StudentDashboard from './pages/student/Dashboard';
+import ParentDashboard from './pages/parent/ParentDashboard'; 
+import ParentSchedule from './pages/parent/ParentSchedule';
+import SchedulePage from './pages/student/SchedulePage'; 
+import AdminCourses from './pages/admin/AdminCourses';
+import AdminClasses from './pages/admin/AdminClasses';
+import AdminCreateClass from "./pages/admin/AdminCreateClass";
+import AdminCreateCourse from "./pages/admin/AdminCreateCourse";
+import AdminAssignStudent from "./pages/admin/AdminAssignStudent";
+import AdminUsers from "./pages/admin/AdminUsers";
+import AdminCreateUser from "./pages/admin/AdminCreateUser";
+// Component Placeholder để tránh lỗi khi chưa có file trang cụ thể
+const Placeholder = ({ title }) => (
+  <div className="p-4 animate__animated animate__fadeIn">
+    <div className="card border-0 shadow-sm rounded-5 p-5 text-center">
+      <i className="bi bi-cone-striped fs-1 text-warning mb-3"></i>
+      <h3 className="fw-bold text-uppercase">{title}</h3>
+      <p className="text-muted">Tính năng này đang được phát triển và sẽ sớm ra mắt.</p>
+    </div>
+  </div>
+);
+
+const HomeRedirect = () => {
+  const { user } = useAuth();
+  if (!user) return <Navigate to="/login" replace />;
+
+  switch (user.role) {
+    case 'Admin': return <Navigate to="/admin" replace />;
+    case 'Giao_Vien': return <Navigate to="/teacher" replace />;
+    case 'Hoc_Sinh': return <Navigate to="/student" replace />;
+    case 'Phu_Huynh': return <Navigate to="/parent" replace />;
+    default: return <Navigate to="/login" replace />;
+  }
+};
+
+function App() {
+  return (
+    <AuthProvider>
+      <Router future={{ v7_startTransition: true, v7_relativeSplatPath: true }}>
+        <Routes>
+          <Route path="/login" element={<Login />} />
+          <Route path="/" element={<HomeRedirect />} />
+          
+          <Route element={<MainLayout />}>
+            
+            {/* --- NHÓM QUẢN TRỊ (ADMIN) --- */}
+            <Route path="/admin" element={<PrivateRoute allowedRoles={['Admin']}><AdminDashboard /></PrivateRoute>} />
+            <Route path="/admin/functions" element={<PrivateRoute allowedRoles={['Admin']}><Placeholder title="Quản lý chức năng" /></PrivateRoute>} />
+            <Route path="/admin/users" element={<PrivateRoute allowedRoles={['Admin']}>{<AdminUsers />}</PrivateRoute>} />
+            <Route path="/admin/courses" element={<PrivateRoute allowedRoles={['Admin']}><AdminCourses /></PrivateRoute>} />
+            <Route path="/admin/classes" element={<PrivateRoute allowedRoles={['Admin']}><AdminClasses /></PrivateRoute>} />
+            <Route path="/admin/schedules" element={<PrivateRoute allowedRoles={['Admin']}><AdminSchedule /></PrivateRoute>} />
+            <Route path="/admin/content" element={<PrivateRoute allowedRoles={['Admin']}><Placeholder title="Nội dung học tập" /></PrivateRoute>} />
+            <Route path="/admin/exams" element={<PrivateRoute allowedRoles={['Admin']}><Placeholder title="Bài tập - Đề thi" /></PrivateRoute>} />
+            <Route path="/admin/attendance" element={<PrivateRoute allowedRoles={['Admin']}><Placeholder title="Quản lý Điểm danh" /></PrivateRoute>} />
+            <Route path="/admin/reports" element={<PrivateRoute allowedRoles={['Admin']}><Placeholder title="Báo cáo và thống kê" /></PrivateRoute>} />
+            <Route path="/admin/notifications" element={<PrivateRoute allowedRoles={['Admin']}><Placeholder title="Quản lý Thông báo" /></PrivateRoute>} />
+            <Route path="/admin/messages" element={<PrivateRoute allowedRoles={['Admin']}><Placeholder title="Quản lý Nhắn tin" /></PrivateRoute>} />
+            <Route path="/admin/profile" element={<PrivateRoute allowedRoles={['Admin']}><Placeholder title="Hồ sơ cá nhân" /></PrivateRoute>} />
+            <Route
+path="/admin/classes/create"
+element={<AdminCreateClass />}
+/>
+            <Route
+path="/admin/courses/create"
+element={<AdminCreateCourse />}
+/>
+            <Route
+path="/admin/classes/assign-students"
+element={<AdminAssignStudent />}
+/>
+<Route
+path="/admin/users/create"
+element={
+<PrivateRoute allowedRoles={['Admin']}>
+<AdminCreateUser />
+</PrivateRoute>
+}
+/>
+            {/* --- NHÓM GIÁO VIÊN (TEACHER) --- */}
+{/* --- NHÓM GIÁO VIÊN (TEACHER) --- */}
+            <Route path="/teacher" element={<PrivateRoute allowedRoles={['Giao_Vien']}><TeacherDashboard /></PrivateRoute>} />
+            <Route path="/teacher/schedule" element={<PrivateRoute allowedRoles={['Giao_Vien']}><TeacherSchedule /></PrivateRoute>} />
+
+            {/* 1. Quản lý lớp học */}
+            <Route path="/teacher/classes" element={<PrivateRoute allowedRoles={['Giao_Vien']}><Placeholder title="Quản lý lớp học" /></PrivateRoute>} />
+
+            {/* 2. Quản lý bài tập - Đề thi */}
+            <Route path="/teacher/exams" element={<PrivateRoute allowedRoles={['Giao_Vien']}><Placeholder title="Quản lý bài tập - Đề thi" /></PrivateRoute>} />
+
+            {/* 3. Chấm điểm */}
+            <Route path="/teacher/grading" element={<PrivateRoute allowedRoles={['Giao_Vien']}><Placeholder title="Chấm điểm" /></PrivateRoute>} />
+
+            {/* 4. Nội dung học tập */}
+            <Route path="/teacher/content" element={<PrivateRoute allowedRoles={['Giao_Vien']}><Placeholder title="Nội dung học tập" /></PrivateRoute>} />
+
+            {/* 5. Thông báo */}
+            <Route path="/teacher/notifications" element={<PrivateRoute allowedRoles={['Giao_Vien']}><Placeholder title="Thông báo" /></PrivateRoute>} />
+
+            {/* 6. Quản lý nhắn tin */}
+            <Route path="/teacher/messages" element={<PrivateRoute allowedRoles={['Giao_Vien']}><Placeholder title="Quản lý nhắn tin" /></PrivateRoute>} />
+
+            {/* 7. Điểm danh */}
+            <Route path="/teacher/attendance" element={<PrivateRoute allowedRoles={['Giao_Vien']}><Placeholder title="Điểm danh" /></PrivateRoute>} />
+
+            {/* 8. Báo cáo và thống kê */}
+            <Route path="/teacher/reports" element={<PrivateRoute allowedRoles={['Giao_Vien']}><Placeholder title="Báo cáo và thống kê" /></PrivateRoute>} />
+            {/* 9. Thông tin cá nhân (Profile) */}
+            <Route path="/teacher/profile" element={<PrivateRoute allowedRoles={['Giao_Vien']}><Placeholder title="Thông tin cá nhân giáo viên" /></PrivateRoute>} />
+
+            {/* --- NHÓM HỌC SINH (STUDENT) --- */}
+            <Route path="/student" element={<PrivateRoute allowedRoles={['Hoc_Sinh']}><StudentDashboard /></PrivateRoute>} />
+            <Route path="/student/schedule" element={<PrivateRoute allowedRoles={['Hoc_Sinh']}><SchedulePage /></PrivateRoute>} />
+            <Route path="/student/homework-list" element={<PrivateRoute allowedRoles={['Hoc_Sinh']}><Placeholder title="Quản lý bài tập/bài thi" /></PrivateRoute>} />
+            <Route path="/student/reports" element={<PrivateRoute allowedRoles={['Hoc_Sinh']}><Placeholder title="Báo cáo thống kê" /></PrivateRoute>} />
+            <Route path="/student/homework" element={<PrivateRoute allowedRoles={['Hoc_Sinh']}><Placeholder title="Học chủ động" /></PrivateRoute>} />
+            <Route path="/student/notifications" element={<PrivateRoute allowedRoles={['Hoc_Sinh']}><Placeholder title="Thông báo" /></PrivateRoute>} />
+
+            {/* --- NHÓM PHỤ HUYNH (PARENT) --- */}
+            <Route path="/parent" element={<PrivateRoute allowedRoles={['Phu_Huynh']}><ParentDashboard /></PrivateRoute>} />
+            <Route path="/parent/schedule" element={<PrivateRoute allowedRoles={['Phu_Huynh']}><ParentSchedule /></PrivateRoute>} />
+            <Route path="/parent/attendance" element={<PrivateRoute allowedRoles={['Phu_Huynh']}><Placeholder title="Xem điểm danh" /></PrivateRoute>} />
+            <Route path="/parent/messages" element={<PrivateRoute allowedRoles={['Phu_Huynh']}><Placeholder title="Quản lý nhắn tin" /></PrivateRoute>} />
+            <Route path="/parent/reports" element={<PrivateRoute allowedRoles={['Phu_Huynh']}><Placeholder title="Báo cáo thống kê" /></PrivateRoute>} />
+          </Route>
+
+          {/* Error Routes */}
+          <Route path="/unauthorized" element={<div className="text-center mt-5"><i className="bi bi-shield-lock-fill fs-1 text-danger"></i><h1 className="mt-3">403 - Không có quyền truy cập</h1></div>} />
+          <Route path="*" element={<Navigate to="/" replace />} />
+        </Routes>
+      </Router>
+    </AuthProvider>
+  );
+}
+
+export default App;
+
+// ngày chỉnh sửa 10:03 ngày 6/3/2026 nội dung chỉnh sửa: Bổ sung các chức năng trên thanh slidebar cho giống vs file excel
