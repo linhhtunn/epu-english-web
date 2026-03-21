@@ -1,9 +1,9 @@
-import axios from 'axios';
+﻿import axios from 'axios';
 
 // Tạo một instance của axios
 const api = axios.create({
-    // Đảm bảo Port 7000 khớp với port HTTPS trong launchSettings.json của Backend C#
-    baseURL: 'https://localhost:5000/api', 
+    // Đảm bảo Port khớp với launchSettings.json của Backend C# (HTTP là 64179)
+    baseURL: 'http://localhost:64179/api', 
     headers: {
         'Content-Type': 'application/json'
     }

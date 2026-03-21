@@ -1,18 +1,63 @@
-import { useState } from "react";
-import { useNavigate } from "react-router-dom";
-import { Plus, Trash2, Edit } from "lucide-react"; // Đảm bảo bạn đã cài lucide-react
+﻿import { useState, useEffect } from "react";
+import { useNavigate, useParams } from "react-router-dom";
+import { Plus, Trash2 } from "lucide-react"; 
+import { classService } from "../../services/classService";
+import { courseService } from "../../services/courseService";
+import { userService } from "../../services/userService";
 
 export default function AdminCreateClass() {
   const navigate = useNavigate();
+  const { id } = useParams();
+  const isEditMode = Boolean(id);
+  const [loading, setLoading] = useState(false);
 
   const [form, setForm] = useState({
-    name: "",
-    level: "",
-    teacher: "",
+    name: "", // maLopHienThi
+    courseId: "", // maKhoaHoc
+    teacherId: "", // maGiaoVien
     status: "active",
-    schedules: [], // Chuyển từ days sang schedules để lưu mảng lịch học
-    description: ""
+    schedules: [], 
+    description: "" // Mapped if available in DB
   });
+
+  const [courses, setCourses] = useState([]);
+  const [teachers, setTeachers] = useState([]);
+
+  useEffect(() => {
+    const fetchData = async () => {
+      try {
+        const [courseData, userData] = await Promise.all([
+          courseService.getAllCourses(),
+          userService.getAllUsers()
+        ]);
+        setCourses(courseData);
+        setTeachers(userData.filter(u => u.roleName === 'Giao_Vien'));
+
+        if (isEditMode) {
+          const classData = await classService.getClassById(id);
+          const schedulesFromDB = (classData.lichHoc || "").split(", ").map((s, index) => {
+            const match = s.match(/(.+?) \((.+?)\)/);
+            if (match) {
+              return { id: Date.now() + index, day: match[1], shift: match[2] };
+            }
+            return null;
+          }).filter(Boolean);
+
+          setForm(prev => ({
+            ...prev,
+            name: classData.maLopHienThi || "",
+            courseId: classData.maKhoaHoc || "",
+            teacherId: classData.maGiaoVien || "",
+            schedules: schedulesFromDB,
+            // description: classData.moTa || "" // Backend API doesnt seem to have description, ignore for now
+          }));
+        }
+      } catch (error) {
+        console.error("Lỗi khi tải dữ liệu", error);
+      }
+    };
+    fetchData();
+  }, [id, isEditMode]);
 
   // Dữ liệu mẫu cho Select
   const daysOfWeek = [
@@ -54,9 +99,40 @@ export default function AdminCreateClass() {
     setForm({ ...form, schedules: updatedSchedules });
   };
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
-    console.log("Dữ liệu gửi đi:", form);
+    if (!form.name || !form.courseId) {
+      alert("Vui lòng điền mã lớp và chọn khóa học");
+      return;
+    }
+
+    const lichHocStr = form.schedules
+      .filter(s => s.day && s.shift)
+      .map(s => `${s.day} (${s.shift})`)
+      .join(", ");
+
+    setLoading(true);
+    try {
+      const payload = {
+        maLopHienThi: form.name,
+        maKhoaHoc: parseInt(form.courseId),
+        maGiaoVien: form.teacherId ? parseInt(form.teacherId) : null,
+        lichHoc: lichHocStr
+      };
+
+      if (isEditMode) {
+        await classService.updateClass(id, payload);
+        alert('Cập nhật lớp học thành công!');
+      } else {
+        await classService.createClass(payload);
+        alert('Tạo lớp học thành công!');
+      }
+      navigate("/admin/classes");
+    } catch (error) {
+      alert(error.response?.data || "Có lỗi xảy ra khi lưu thông tin.");
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (
@@ -68,7 +144,7 @@ export default function AdminCreateClass() {
         </button>
       </div>
 
-      <h3 className="mb-4">📘 Tạo lớp học mới</h3>
+      <h3 className="mb-4">📘 {isEditMode ? 'Cập nhật lớp học' : 'Tạo lớp học mới'}</h3>
 
       <div className="row">
         {/* FORM */}
@@ -83,23 +159,26 @@ export default function AdminCreateClass() {
                 <input
                   className="form-control"
                   placeholder="Ví dụ: Lớp tiếng Anh cơ bản"
+                  value={form.name}
                   onChange={(e) => setForm({ ...form, name: e.target.value })}
+                  disabled={isEditMode}
+                  style={{ backgroundColor: isEditMode ? '#e9ecef' : '' }}
                 />
               </div>
 
               <div className="row">
-                {/* KHÓA HỌC */}
                 <div className="col-md-6 mb-3">
                   <label className="form-label fw-bold">Khóa học *</label>
                   <select
                     className="form-select"
-                    onChange={(e) => setForm({ ...form, level: e.target.value })}
+                    value={form.courseId}
+                    onChange={(e) => setForm({ ...form, courseId: e.target.value })}
+                    required
                   >
                     <option value="">Chọn khóa học</option>
-                    <option>A1</option>
-                    <option>A2</option>
-                    <option>B1</option>
-                    <option>B2</option>
+                    {courses.map(c => (
+                      <option key={c.maKhoaHoc} value={c.maKhoaHoc}>{c.tenKhoaHoc}</option>
+                    ))}
                   </select>
                 </div>
 
@@ -121,11 +200,13 @@ export default function AdminCreateClass() {
                 <label className="form-label fw-bold">Giáo viên *</label>
                 <select
                   className="form-select"
-                  onChange={(e) => setForm({ ...form, teacher: e.target.value })}
+                  value={form.teacherId}
+                  onChange={(e) => setForm({ ...form, teacherId: e.target.value })}
                 >
                   <option value="">Chọn giáo viên</option>
-                  <option>Giáo viên Lan</option>
-                  <option>Giáo viên Minh</option>
+                  {teachers.map(t => (
+                    <option key={t.maNguoiDung} value={t.maNguoiDung}>{t.hoTen} ({t.tenDangNhap})</option>
+                  ))}
                 </select>
               </div>
 
@@ -204,6 +285,7 @@ export default function AdminCreateClass() {
                   className="form-control"
                   rows="3"
                   placeholder="Nhập mô tả lớp học..."
+                  value={form.description}
                   onChange={(e) => setForm({ ...form, description: e.target.value })}
                 />
               </div>
@@ -212,8 +294,8 @@ export default function AdminCreateClass() {
                 <button type="button" className="btn btn-light" onClick={() => navigate(-1)}>
                   Hủy
                 </button>
-                <button type="submit" className="btn btn-primary">
-                  📘 Tạo lớp học
+                <button type="submit" className="btn btn-primary" disabled={loading}>
+                  📘 {loading ? "Đang lưu..." : (isEditMode ? "Cập nhật" : "Tạo lớp học")}
                 </button>
               </div>
             </form>
@@ -224,9 +306,9 @@ export default function AdminCreateClass() {
         <div className="col-md-6 d-flex nalign-items-center justify-content-center">
           <div className="text-center">
             <div style={{ fontSize: "70px" }}>🎓</div>
-            <h5 className="mt-3">Tạo lớp học mới</h5>
+            <h5 className="mt-3">{isEditMode ? 'Cập nhật lớp học' : 'Tạo lớp học mới'}</h5>
             <p className="text-muted">
-              Thêm lớp học vào hệ thống để quản lý học viên và lịch học.
+              {isEditMode ? 'Cập nhật thông tin giảng viên và lịch học cho lớp.' : 'Thêm lớp học vào hệ thống để quản lý học viên và lịch học.'}
             </p>
           </div>
         </div>
