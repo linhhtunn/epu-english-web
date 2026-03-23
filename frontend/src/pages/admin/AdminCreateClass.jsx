@@ -5,6 +5,12 @@ import { classService } from "../../services/classService";
 import { courseService } from "../../services/courseService";
 import { userService } from "../../services/userService";
 
+/**
+ * Chức năng: Tạo mới hoặc cập nhật thông tin lớp học cho quản trị viên
+ * Creatby: Nguyễn Thùy Linh - 14/3/2026
+ * Updateby: Nguyễn Thùy Linh - 23/3/2026
+ * @returns {JSX.Element} Giao diện form tạo hoặc cập nhật lớp học
+ */
 export default function AdminCreateClass() {
   const navigate = useNavigate();
   const { id } = useParams();
@@ -24,6 +30,12 @@ export default function AdminCreateClass() {
   const [teachers, setTeachers] = useState([]);
 
   useEffect(() => {
+    /**
+     * Chức năng: Tải dữ liệu khóa học, giáo viên và thông tin lớp khi ở chế độ chỉnh sửa
+     * Creatby: Nguyễn Thùy Linh - 14/3/2026
+     * Updateby: Nguyễn Thùy Linh - 23/3/2026
+     * @returns {Promise<void>} Không trả về giá trị
+     */
     const fetchData = async () => {
       try {
         const [courseData, userData] = await Promise.all([
@@ -31,7 +43,13 @@ export default function AdminCreateClass() {
           userService.getAllUsers()
         ]);
         setCourses(courseData);
-        setTeachers(userData.filter(u => u.roleName === 'Giao_Vien'));
+        setTeachers(
+          userData.filter(
+            (u) =>
+              u.roleName === "Giao_Vien" &&
+              (u.teacherId !== null && u.teacherId !== undefined)
+          )
+        );
 
         if (isEditMode) {
           const classData = await classService.getClassById(id);
@@ -80,11 +98,24 @@ export default function AdminCreateClass() {
   ];
 
   // Logic xử lý lịch học
+  /**
+   * Chức năng: Thêm một lịch học mới vào danh sách lịch học của lớp
+   * Creatby: Nguyễn Thùy Linh - 14/3/2026
+   * Updateby: Nguyễn Thùy Linh - 23/3/2026
+   * @returns {void} Không trả về giá trị
+   */
   const addSchedule = () => {
     const newSchedule = { id: Date.now(), day: "", shift: "" };
     setForm({ ...form, schedules: [...form.schedules, newSchedule] });
   };
 
+  /**
+   * Chức năng: Xóa một lịch học khỏi danh sách lịch học của lớp
+   * Creatby: Nguyễn Thùy Linh - 14/3/2026
+   * Updateby: Nguyễn Thùy Linh - 23/3/2026
+   * @param {number} id - Mã lịch học cần xóa
+   * @returns {void} Không trả về giá trị
+   */
   const deleteSchedule = (id) => {
     setForm({
       ...form,
@@ -92,6 +123,15 @@ export default function AdminCreateClass() {
     });
   };
 
+  /**
+   * Chức năng: Cập nhật thông tin một lịch học trong danh sách
+   * Creatby: Nguyễn Thùy Linh - 14/3/2026
+   * Updateby: Nguyễn Thùy Linh - 23/3/2026
+   * @param {number} id - Mã lịch học cần cập nhật
+   * @param {string} field - Tên trường cần cập nhật
+   * @param {string} value - Giá trị mới của trường
+   * @returns {void} Không trả về giá trị
+   */
   const updateSchedule = (id, field, value) => {
     const updatedSchedules = form.schedules.map((s) =>
       s.id === id ? { ...s, [field]: value } : s
@@ -99,6 +139,13 @@ export default function AdminCreateClass() {
     setForm({ ...form, schedules: updatedSchedules });
   };
 
+  /**
+   * Chức năng: Xử lý lưu thông tin tạo mới hoặc cập nhật lớp học
+   * Creatby: Nguyễn Thùy Linh - 14/3/2026
+   * Updateby: Nguyễn Thùy Linh - 23/3/2026
+   * @param {Event} e - Sự kiện submit của form
+   * @returns {Promise<void>} Không trả về giá trị
+   */
   const handleSubmit = async (e) => {
     e.preventDefault();
     if (!form.name || !form.courseId) {
@@ -205,7 +252,7 @@ export default function AdminCreateClass() {
                 >
                   <option value="">Chọn giáo viên</option>
                   {teachers.map(t => (
-                    <option key={t.maNguoiDung} value={t.maNguoiDung}>{t.hoTen} ({t.tenDangNhap})</option>
+                    <option key={t.teacherId} value={t.teacherId}>{t.hoTen} ({t.tenDangNhap})</option>
                   ))}
                 </select>
               </div>

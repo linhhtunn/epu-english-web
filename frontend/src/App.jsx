@@ -1,17 +1,17 @@
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
-import { AuthProvider, useAuth } from './context/AuthContext'; 
+import { AuthProvider, useAuth } from './context/AuthContext';
 import PrivateRoute from './routes/PrivateRoute';
-import MainLayout from './components/MainLayout'; 
+import MainLayout from './components/MainLayout';
 
 // Import Pages
 import Login from './pages/Login';
 import AdminDashboard from './pages/admin/AdminDashboard';
 import TeacherDashboard from './pages/teacher/TeacherDashboard';
-import TeacherSchedule from './pages/teacher/TeacherSchedule'; 
+import TeacherSchedule from './pages/teacher/TeacherSchedule';
 import StudentDashboard from './pages/student/Dashboard';
-import ParentDashboard from './pages/parent/ParentDashboard'; 
+import ParentDashboard from './pages/parent/ParentDashboard';
 import ParentSchedule from './pages/parent/ParentSchedule';
-import SchedulePage from './pages/student/SchedulePage'; 
+import SchedulePage from './pages/student/SchedulePage';
 
 // Import Admin Pages
 import AdminSchedule from './pages/admin/AdminSchedule';
@@ -21,8 +21,10 @@ import AdminCreateClass from "./pages/admin/AdminCreateClass";
 import AdminCreateCourse from "./pages/admin/AdminCreateCourse";
 import AdminAssignStudent from "./pages/admin/AdminAssignStudent";
 import AdminMessages from './pages/admin/AdminMessages'; // Đã import component nhắn tin
+import AdminStudyContent from './pages/admin/AdminStudyContent'; // Đã import trang nội dung học tập 
 import AdminUsers from "./pages/admin/AdminUsers";
 import AdminCreateUser from "./pages/admin/AdminCreateUser";
+import AdminNotifcations from "./pages/admin/AdminNotifications";
 
 // Import Teacher Pages
 import TeacherAttendance from './pages/teacher/TeacherAttendance';
@@ -60,52 +62,52 @@ function App() {
         <Routes>
           <Route path="/login" element={<Login />} />
           <Route path="/" element={<HomeRedirect />} />
-          
+
           <Route element={<MainLayout />}>
-            
+
             {/* --- NHÓM QUẢN TRỊ (ADMIN) --- */}
             <Route path="/admin" element={<PrivateRoute allowedRoles={['Admin']}><AdminDashboard /></PrivateRoute>} />
             <Route path="/admin/functions" element={<PrivateRoute allowedRoles={['Admin']}><Placeholder title="Quản lý chức năng" /></PrivateRoute>} />
             <Route path="/admin/users" element={<PrivateRoute allowedRoles={['Admin']}><AdminUsers /></PrivateRoute>} />
             <Route path="/admin/courses" element={<PrivateRoute allowedRoles={['Admin']}><AdminCourses /></PrivateRoute>} />
             <Route path="/admin/courses/create" element={<PrivateRoute allowedRoles={['Admin']}><AdminCreateCourse /></PrivateRoute>} />
-            
+
             <Route path="/admin/classes" element={<PrivateRoute allowedRoles={['Admin']}><AdminClasses /></PrivateRoute>} />
             <Route path="/admin/classes/create" element={<PrivateRoute allowedRoles={['Admin']}><AdminCreateClass /></PrivateRoute>} />
             <Route path="/admin/classes/assign-students" element={<PrivateRoute allowedRoles={['Admin']}><AdminAssignStudent /></PrivateRoute>} />
-            
+
             <Route path="/admin/schedules" element={<PrivateRoute allowedRoles={['Admin']}><AdminSchedule /></PrivateRoute>} />
-            <Route path="/admin/content" element={<PrivateRoute allowedRoles={['Admin']}><Placeholder title="Nội dung học tập" /></PrivateRoute>} />
+
             <Route path="/admin/exams" element={<PrivateRoute allowedRoles={['Admin']}><Placeholder title="Bài tập - Đề thi" /></PrivateRoute>} />
             <Route path="/admin/attendance" element={<PrivateRoute allowedRoles={['Admin']}><Placeholder title="Quản lý Điểm danh" /></PrivateRoute>} />
             <Route path="/admin/reports" element={<PrivateRoute allowedRoles={['Admin']}><Placeholder title="Báo cáo và thống kê" /></PrivateRoute>} />
-            <Route path="/admin/notifications" element={<PrivateRoute allowedRoles={['Admin']}><Placeholder title="Quản lý Thông báo" /></PrivateRoute>} />
-            
+            <Route path="/admin/notifications" element={<PrivateRoute allowedRoles={['Admin']}><AdminNotifcations /></PrivateRoute>} />
+            <Route path="/admin/content" element={<PrivateRoute allowedRoles={['Admin']}><AdminStudyContent /></PrivateRoute>} />
             {/* ĐÃ TÍCH HỢP TRANG TIN NHẮN TẠI ĐÂY */}
             <Route path="/admin/messages" element={<PrivateRoute allowedRoles={['Admin']}><AdminMessages /></PrivateRoute>} />
-            
+
             <Route path="/admin/profile" element={<PrivateRoute allowedRoles={['Admin']}><Placeholder title="Hồ sơ cá nhân" /></PrivateRoute>} />
 
             <Route
-path="/admin/classes/create"
-element={<AdminCreateClass />}
-/>
+              path="/admin/classes/create"
+              element={<AdminCreateClass />}
+            />
             <Route
-path="/admin/courses/create"
-element={<AdminCreateCourse />}
-/>
+              path="/admin/courses/create"
+              element={<AdminCreateCourse />}
+            />
             <Route
-path="/admin/classes/assign-students"
-element={<AdminAssignStudent />}
-/>
-<Route
-path="/admin/users/create"
-element={
-<PrivateRoute allowedRoles={['Admin']}>
-<AdminCreateUser />
-</PrivateRoute>
-}
-/>
+              path="/admin/classes/assign-students"
+              element={<AdminAssignStudent />}
+            />
+            <Route
+              path="/admin/users/create"
+              element={
+                <PrivateRoute allowedRoles={['Admin']}>
+                  <AdminCreateUser />
+                </PrivateRoute>
+              }
+            />
 
 
             {/* --- NHÓM GIÁO VIÊN (TEACHER) --- */}
@@ -114,7 +116,7 @@ element={
             <Route path="/teacher/classes" element={<PrivateRoute allowedRoles={['Giao_Vien']}><Placeholder title="Quản lý lớp học" /></PrivateRoute>} />
             <Route path="/teacher/exams" element={<PrivateRoute allowedRoles={['Giao_Vien']}><Placeholder title="Quản lý bài tập - Đề thi" /></PrivateRoute>} />
             <Route path="/teacher/grading" element={<PrivateRoute allowedRoles={['Giao_Vien']}><Placeholder title="Chấm điểm" /></PrivateRoute>} />
-            <Route path="/teacher/content" element={<PrivateRoute allowedRoles={['Giao_Vien']}><Placeholder title="Nội dung học tập" /></PrivateRoute>} />
+            <Route path="/teacher/content" element={<PrivateRoute allowedRoles={['Giao_Vien']}><AdminStudyContent /></PrivateRoute>} />
             <Route path="/teacher/notifications" element={<PrivateRoute allowedRoles={['Giao_Vien']}><Placeholder title="Thông báo" /></PrivateRoute>} />
             <Route path="/teacher/messages" element={<PrivateRoute allowedRoles={['Giao_Vien']}><Placeholder title="Quản lý nhắn tin" /></PrivateRoute>} />
             <Route path="/teacher/attendance" element={<PrivateRoute allowedRoles={['Giao_Vien']}><TeacherAttendance /></PrivateRoute>} />

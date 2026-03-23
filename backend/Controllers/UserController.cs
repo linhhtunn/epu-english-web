@@ -3,7 +3,7 @@ using Microsoft.EntityFrameworkCore;
 using backend.Data;
 using backend.Models;
 using backend.DTOs;
-using backend.DTOs;
+
 namespace backend.Controllers
 {
     [Route("api/[controller]")]
@@ -23,6 +23,7 @@ namespace backend.Controllers
         {
             var users = await _context.NguoiDungs
                 .Include(u => u.MaVaiTroNavigation)
+                .Include(u => u.GiaoVien)
                 .Select(u => new
                 {
                     u.MaNguoiDung,
@@ -31,7 +32,8 @@ namespace backend.Controllers
                     u.HoTen,
                     u.TrangThai,
                     u.NgayTao,
-                    RoleName = u.MaVaiTroNavigation.TenVaiTro
+                    RoleName = u.MaVaiTroNavigation.TenVaiTro,
+                    TeacherId = u.GiaoVien != null ? u.GiaoVien.MaGiaoVien : (int?)null
                 })
                 .ToListAsync();
 
