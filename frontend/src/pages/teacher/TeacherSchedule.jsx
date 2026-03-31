@@ -1,20 +1,12 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import ScheduleTable from '../../components/ScheduleTable';
 import { useAuth } from '../../context/AuthContext';
-import scheduleData from '../../data/schedule.json';
 
 const TeacherSchedule = () => {
     const { user } = useAuth();
-    // Khởi tạo ngày xem lịch theo mốc thời gian hệ thống của bạn
-    const [currentDate, setCurrentDate] = useState(new Date("2026-02-26"));
-    const [classes, setClasses] = useState([]);
+    const [currentDate, setCurrentDate] = useState(new Date());
+    const [classes] = useState([]);
 
-    useEffect(() => {
-        // Lọc theo ID giảng viên để đảm bảo tính duy nhất
-        const currentTeacherId = user?.teacherId || "GV001";
-        const filtered = scheduleData.filter(item => item.teacherId === currentTeacherId);
-        setClasses(filtered); 
-    }, [user]);
 
     const changeWeek = (amount) => {
         const newDate = new Date(currentDate);
@@ -32,10 +24,10 @@ const TeacherSchedule = () => {
                     </h2>
                     <div className="d-flex align-items-center gap-2">
                         <span className="badge bg-primary-subtle text-primary border border-primary-subtle rounded-pill px-3">
-                            Mã: {user?.teacherId || "GV001"}
+                            Mã GV: {user?.profileId || '—'}
                         </span>
                         <p className="text-muted mb-0">
-                            Giảng viên: <span className="fw-bold text-dark">{user?.hoTen || "Nguyễn Thị Lan Anh"}</span>
+                            Giảng viên: <span className="fw-bold text-dark">{user?.fullName || user?.hoTen || '—'}</span>
                         </p>
                     </div>
                 </div>
