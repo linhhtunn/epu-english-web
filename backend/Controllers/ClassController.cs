@@ -1,5 +1,6 @@
-﻿using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.AspNetCore.Authorization;
 using backend.Data;
 using backend.Models;
 using backend.DTOs;
@@ -8,6 +9,7 @@ namespace backend.Controllers
 {
     [Route("api/[controller]")]
     [ApiController]
+    [Authorize(Roles = "Admin")]
     public class ClassController : ControllerBase
     {
         private readonly AppDbContext _context;
@@ -172,7 +174,7 @@ namespace backend.Controllers
             };
 
             // Workaround cho EF Core có thể dùng DateOnly/DateTime. Cần check file gốc của HocSinhLopHoc.cs. Giả sử map bằng DateTime.
-            
+
             _context.HocSinhLopHocs.Add(assignment);
             await _context.SaveChangesAsync();
 
@@ -185,4 +187,3 @@ namespace backend.Controllers
         }
     }
 }
-

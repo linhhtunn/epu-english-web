@@ -1,4 +1,4 @@
-﻿using System.ComponentModel.DataAnnotations;
+using System.ComponentModel.DataAnnotations;
 
 namespace backend.DTOs
 {
@@ -29,10 +29,10 @@ namespace backend.DTOs
         [Required]
         public string TrangThai { get; set; } // 'Hoat_Dong', 'Tam_Khoa', 'Khoa'
 
-        public string? PhongBan { get; set; } // ad
-        public string? ChuyenMon { get; set; } // gv
-        public string? SoDienThoai { get; set; } // ph
-        public int? MaPhuHuynh { get; set; } // hs
+        // Extra info depending on role
+        public string? PhongBan { get; set; } // for Admin
+        public string? ChuyenMon { get; set; } // for Teacher
+        public string? SoDienThoai { get; set; } // for Parent
+        public int? MaPhuHuynh { get; set; } // for Student
     }
 }
-

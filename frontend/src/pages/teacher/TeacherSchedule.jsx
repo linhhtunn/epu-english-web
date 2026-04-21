@@ -1,20 +1,50 @@
 import React, { useState, useEffect } from 'react';
 import ScheduleTable from '../../components/ScheduleTable';
 import { useAuth } from '../../context/AuthContext';
-import scheduleData from '../../data/schedule.json';
+import { teacherService } from '../../services/teacherService';
 
 const TeacherSchedule = () => {
     const { user } = useAuth();
-    // Khởi tạo ngày xem lịch theo mốc thời gian hệ thống của bạn
-    const [currentDate, setCurrentDate] = useState(new Date("2026-02-26"));
+    const [currentDate, setCurrentDate] = useState(new Date());
     const [classes, setClasses] = useState([]);
+    const [loading, setLoading] = useState(true);
+
+    const formatDate = (date) => {
+        const year = date.getFullYear();
+        const month = String(date.getMonth() + 1).padStart(2, "0");
+        const day = String(date.getDate()).padStart(2, "0");
+        return `${year}-${month}-${day}`;
+    };
+
+    const getWeekRange = (date) => {
+        const start = new Date(date);
+        const day = start.getDay();
+        const diff = start.getDate() - day + (day === 0 ? -6 : 1);
+        const monday = new Date(start.setDate(diff));
+        const sunday = new Date(monday);
+        sunday.setDate(monday.getDate() + 6);
+        return {
+            fromDate: formatDate(monday),
+            toDate: formatDate(sunday),
+        };
+    };
 
     useEffect(() => {
-        // Lọc theo ID giảng viên để đảm bảo tính duy nhất
-        const currentTeacherId = user?.teacherId || "GV001";
-        const filtered = scheduleData.filter(item => item.teacherId === currentTeacherId);
-        setClasses(filtered); 
-    }, [user]);
+        const fetchSchedule = async () => {
+            setLoading(true);
+            try {
+                const { fromDate, toDate } = getWeekRange(currentDate);
+                const data = await teacherService.getSchedule(fromDate, toDate);
+                setClasses(data); 
+            } catch (err) {
+                console.error("Lỗi khi tải lịch dạy:", err);
+            } finally {
+                setLoading(false);
+            }
+        };
+
+        fetchSchedule();
+    }, [currentDate]);
 
     const changeWeek = (amount) => {
         const newDate = new Date(currentDate);
@@ -32,10 +62,10 @@ const TeacherSchedule = () => {
                     </h2>
                     <div className="d-flex align-items-center gap-2">
                         <span className="badge bg-primary-subtle text-primary border border-primary-subtle rounded-pill px-3">
-                            Mã: {user?.teacherId || "GV001"}
+                            Mã: {user?.profileId || user?.username || "N/A"}
                         </span>
                         <p className="text-muted mb-0">
-                            Giảng viên: <span className="fw-bold text-dark">{user?.hoTen || "Nguyễn Thị Lan Anh"}</span>
+                            Giảng viên: <span className="fw-bold text-dark">{user?.fullName || "N/A"}</span>
                         </p>
                     </div>
                 </div>
@@ -73,7 +103,15 @@ const TeacherSchedule = () => {
             {/* --- BẢNG LỊCH DẠY --- */}
             <div className="card border-0 shadow-sm rounded-5 overflow-hidden">
                 <div className="card-body p-0">
-                    <ScheduleTable data={classes} currentViewDate={currentDate} />
+                    {loading ? (
+                        <div className="d-flex justify-content-center p-5">
+                            <div className="spinner-border text-primary" role="status">
+                                <span className="visually-hidden">Loading...</span>
+                            </div>
+                        </div>
+                    ) : (
+                        <ScheduleTable data={classes} currentViewDate={currentDate} />
+                    )}
                 </div>
             </div>
 

@@ -1,74 +1,62 @@
-﻿import React from "react";
+import React, { useState, useEffect } from "react";
 import { useAuth } from "../../context/AuthContext";
+import { adminService } from "../../services/adminService";
 
 const AdminDashboard = () => {
     const { user } = useAuth();
+    const [dashboardData, setDashboardData] = useState(null);
+    const [loading, setLoading] = useState(true);
+
+    useEffect(() => {
+        const fetchDashboard = async () => {
+            try {
+                setLoading(true);
+                const data = await adminService.getDashboard();
+                setDashboardData(data);
+            } catch (err) {
+                console.error("Lỗi tải dashboard admin:", err);
+            } finally {
+                setLoading(false);
+            }
+        };
+        fetchDashboard();
+    }, []);
+
+    if (loading) {
+        return <div className="p-5 text-center">Loading...</div>;
+    }
+
+    const { stats: dbStats, ongoingClasses = [] } = dashboardData || {};
 
     const stats = [
         {
             title: "Tổng học viên",
-            count: "1,250",
+            count: dbStats?.totalStudentsCount || "0",
             icon: "bi-people-fill",
             color: "linear-gradient(45deg, #005197, #0081f1)",
         },
         {
-            title: "Khóa học đang mở",
-            count: "45",
+            title: "Khóa học",
+            count: dbStats?.totalCoursesCount || "0",
             icon: "bi-book-half",
             color: "linear-gradient(45deg, #28a745, #48d667)",
         },
         {
             title: "Doanh thu tháng",
-            count: "540M",
+            count: dbStats?.monthlyRevenue || "0",
             icon: "bi-cash-coin",
             color: "linear-gradient(45deg, #f39c12, #fbc531)",
         },
         {
             title: "Lớp học hôm nay",
-            count: "12",
+            count: dbStats?.todayClassesCount || "0",
             icon: "bi-calendar-check",
             color: "linear-gradient(45deg, #e74c3c, #ff7675)",
         },
     ];
 
-    const ongoingClasses = [
-        {
-            id: "HNI-PRI4-006",
-            course: "IELTS Reading: Multiple Choice",
-            teacher: "Nguyễn Thị Lan Anh",
-            room: "Lab 1",
-            time: "07:00 - 09:40",
-            status: "Đang học",
-        },
-        {
-            id: "IELTS-SPK",
-            course: "IELTS Speaking: Part 3",
-            teacher: "Mr. Steven Dang",
-            room: "A302",
-            time: "07:55 - 10:35",
-            status: "Đang học",
-        },
-        {
-            id: "TEST-002",
-            course: "IELTS Mock Test: Listening",
-            teacher: "Ban Khảo Thí",
-            room: "Hội trường G3",
-            time: "13:30 - 15:10",
-            status: "Sắp bắt đầu",
-        },
-        {
-            id: "ENG-WRT-02",
-            course: "Academic Writing Task 2",
-            teacher: "Ms. Thu Hà",
-            room: "C101",
-            time: "14:25 - 17:00",
-            status: "Chờ dạy",
-        },
-    ];
-
     return (
         <div className="p-4 animate__animated animate__fadeIn">
-            {/* --- HEADER: ĐÃ BỔ SUNG NÚT THÔNG BÁO & HỌC KỲ ĐỂ ĐỒNG BỘ --- */}
             <div className="mb-4 d-flex justify-content-between align-items-center">
                 <div>
                     <h2 className="fw-bold text-dark mb-1 text-uppercase">
@@ -84,7 +72,6 @@ const AdminDashboard = () => {
                 </div>
 
                 <div className="d-flex align-items-center gap-3">
-                    {/* 1. School Tag: Học kỳ (Đồng bộ với Teacher Dashboard) */}
                     <div className="bg-white p-2 px-3 rounded-4 shadow-sm border d-flex align-items-center d-none d-md-flex">
                         <div className="bg-primary-subtle p-2 rounded-3 me-3">
                             <i className="bi bi-calendar-check text-primary"></i>
@@ -108,7 +95,6 @@ const AdminDashboard = () => {
                         </div>
                     </div>
 
-                    {/* 2. Nút thông báo hình chuông (Đồng bộ với các trang khác) */}
                     <div
                         className="position-relative hover-up bg-white shadow-sm border rounded-circle d-flex align-items-center justify-content-center"
                         style={{
@@ -128,7 +114,6 @@ const AdminDashboard = () => {
                 </div>
             </div>
 
-            {/* --- CÁC THẺ THỐNG KÊ NHANH --- */}
             <div className="row g-4 mb-5">
                 {stats.map((item, index) => (
                     <div className="col-md-3" key={index}>
@@ -160,7 +145,6 @@ const AdminDashboard = () => {
             </div>
 
             <div className="row g-4">
-                {/* --- DANH SÁCH LỚP ĐANG HỌC --- */}
                 <div className="col-lg-8">
                     <div className="card border-0 shadow-sm rounded-5 p-4 h-100">
                         <div className="d-flex justify-content-between align-items-center mb-4">
@@ -190,7 +174,11 @@ const AdminDashboard = () => {
                                     </tr>
                                 </thead>
                                 <tbody>
-                                    {ongoingClasses.map((cls, idx) => (
+                                    {ongoingClasses.length === 0 ? (
+                                        <tr>
+                                            <td colSpan="4" className="text-center py-4 text-muted">Không có lớp học nào trong ngày hôm nay.</td>
+                                        </tr>
+                                    ) : ongoingClasses.map((cls, idx) => (
                                         <tr
                                             key={idx}
                                             style={{ cursor: "pointer" }}
@@ -213,10 +201,9 @@ const AdminDashboard = () => {
                                                             fontSize: "12px",
                                                         }}
                                                     >
-                                                        {cls.teacher
-                                                            .split(" ")
-                                                            .pop()
-                                                            .charAt(0)}
+                                                        {cls.teacher && cls.teacher.indexOf(" ") !== -1
+                                                            ? cls.teacher.split(" ").pop().charAt(0)
+                                                            : cls.teacher.charAt(0)}
                                                     </div>
                                                     <span className="small fw-bold text-secondary">
                                                         {cls.teacher}
@@ -256,7 +243,6 @@ const AdminDashboard = () => {
                     </div>
                 </div>
 
-                {/* --- CẢNH BÁO & THÔNG BÁO CHI TIẾT --- */}
                 <div className="col-lg-4">
                     <div className="card border-0 shadow-sm rounded-5 p-4 h-100">
                         <h5 className="fw-bold mb-4 text-dark">
@@ -289,19 +275,6 @@ const AdminDashboard = () => {
                                     viên nữ.
                                 </p>
                             </div>
-
-                            <div className="p-3 bg-warning-subtle rounded-4 border-start border-4 border-warning">
-                                <div className="d-flex justify-content-between">
-                                    <small className="fw-bold text-warning">
-                                        YÊU CẦU HỖ TRỢ
-                                    </small>
-                                    <small className="text-muted">08:00</small>
-                                </div>
-                                <p className="mb-0 small fw-bold mt-1">
-                                    GV Lan Anh yêu cầu hỗ trợ kỹ thuật tại Phòng
-                                    Lab 1.
-                                </p>
-                            </div>
                         </div>
                         <button className="btn btn-light w-100 mt-auto rounded-pill fw-bold border text-muted shadow-sm">
                             Xem tất cả nhật ký
@@ -332,4 +305,3 @@ const AdminDashboard = () => {
 };
 
 export default AdminDashboard;
-

@@ -1,5 +1,6 @@
-﻿using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.AspNetCore.Authorization;
 using backend.Data;
 using backend.Models;
 using backend.DTOs;
@@ -8,6 +9,7 @@ namespace backend.Controllers
 {
     [Route("api/[controller]")]
     [ApiController]
+    [Authorize(Roles = "Admin")]
     public class CourseController : ControllerBase
     {
         private readonly AppDbContext _context;
@@ -114,4 +116,3 @@ namespace backend.Controllers
         }
     }
 }
-

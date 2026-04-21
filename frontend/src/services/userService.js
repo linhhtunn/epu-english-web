@@ -1,4 +1,4 @@
-﻿import api from "./api";
+import api from "./api";
 
 let usersCache = null;
 
@@ -33,4 +33,3 @@ export const userService = {
         return response.data;
     },
 };
-

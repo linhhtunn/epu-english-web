@@ -1,5 +1,3 @@
-﻿-- ===========
--- ===========
 USE QuanLyTrungTam;
 
 -- MOCK DATA FOR VAI TRO (ROLES)
@@ -14,16 +12,16 @@ INSERT IGNORE INTO vaiTro (maVaiTro, tenVaiTro) VALUES
 -- Passwords will be simple for testing or hashed if backend uses a specific hash. 
 -- Assuming raw or simple hash initially. Let's use 'password123' as placeholder.
 INSERT IGNORE INTO nguoiDung (maNguoiDung, tenDangNhap, email, matKhau, salt, hoTen, maVaiTro, trangThai) VALUES
-(1, 'admin_01', 'admin@example.com', 'hashed_pw', 'salt123', 'Quáº£n Trá»‹ ViÃªn 1', 1, 'Hoat_Dong'),
-(2, 'gv_01', 'gv01@example.com', 'hashed_pw', 'salt123', 'GiÃ¡o ViÃªn 1', 2, 'Hoat_Dong'),
-(3, 'gv_02', 'gv02@example.com', 'hashed_pw', 'salt123', 'GiÃ¡o ViÃªn 2', 2, 'Hoat_Dong'),
-(4, 'ph_01', 'ph01@example.com', 'hashed_pw', 'salt123', 'Phá»¥ Huynh 1', 3, 'Hoat_Dong'),
-(5, 'hs_01', 'hs01@example.com', 'hashed_pw', 'salt123', 'Há»c Sinh 1', 4, 'Hoat_Dong'),
-(6, 'hs_02', 'hs02@example.com', 'hashed_pw', 'salt123', 'Há»c Sinh 2', 4, 'Hoat_Dong');
+(1, 'admin_01', 'admin@example.com', 'hashed_pw', 'salt123', 'Quản Trị Viên 1', 1, 'Hoat_Dong'),
+(2, 'gv_01', 'gv01@example.com', 'hashed_pw', 'salt123', 'Giáo Viên 1', 2, 'Hoat_Dong'),
+(3, 'gv_02', 'gv02@example.com', 'hashed_pw', 'salt123', 'Giáo Viên 2', 2, 'Hoat_Dong'),
+(4, 'ph_01', 'ph01@example.com', 'hashed_pw', 'salt123', 'Phụ Huynh 1', 3, 'Hoat_Dong'),
+(5, 'hs_01', 'hs01@example.com', 'hashed_pw', 'salt123', 'Học Sinh 1', 4, 'Hoat_Dong'),
+(6, 'hs_02', 'hs02@example.com', 'hashed_pw', 'salt123', 'Học Sinh 2', 4, 'Hoat_Dong');
 
--- Há»’ SÆ  CHI TIáº¾T
-INSERT IGNORE INTO quanTriVien (maNguoiDung, phongBan) VALUES (1, 'Ban GiÃ¡m Äá»‘c');
-INSERT IGNORE INTO giaoVien (maNguoiDung, chuyenMon) VALUES (2, 'IELTS'), (3, 'Giao Tiáº¿p');
+-- HỒ SƠ CHI TIẾT
+INSERT IGNORE INTO quanTriVien (maNguoiDung, phongBan) VALUES (1, 'Ban Giám Đốc');
+INSERT IGNORE INTO giaoVien (maNguoiDung, chuyenMon) VALUES (2, 'IELTS'), (3, 'Giao Tiếp');
 INSERT IGNORE INTO phuHuynh (maNguoiDung, soDienThoai) VALUES (4, '0901234567');
 INSERT IGNORE INTO hocSinh (maHocSinh, maNguoiDung, maPhuHuynh, diemTongApos) VALUES 
 (1, 5, 1, 100), -- Assuming maPhuHuynh=1 corresponds to the first inserted phuHuynh
@@ -31,9 +29,9 @@ INSERT IGNORE INTO hocSinh (maHocSinh, maNguoiDung, maPhuHuynh, diemTongApos) VA
 
 -- MOCK DATA FOR COURSES (khoaHoc)
 INSERT IGNORE INTO khoaHoc (maKhoaHoc, tenKhoaHoc, capDo, moTa) VALUES
-(1, 'IELTS Foundation', 'Beginner', 'KhÃ³a há»c ná»n táº£ng IELTS'),
-(2, 'Giao Tiáº¿p CÆ¡ Báº£n', 'Beginner', 'Tiáº¿ng Anh giao tiáº¿p hÃ ng ngÃ y'),
-(3, 'IELTS Intensive', 'Advanced', 'KhÃ³a há»c luyá»‡n thi IELTS cÆ°á»ng Ä‘á»™ cao');
+(1, 'IELTS Foundation', 'Beginner', 'Khóa học nền tảng IELTS'),
+(2, 'Giao Tiếp Cơ Bản', 'Beginner', 'Tiếng Anh giao tiếp hàng ngày'),
+(3, 'IELTS Intensive', 'Advanced', 'Khóa học luyện thi IELTS cường độ cao');
 
 -- MOCK DATA FOR CLASSES (lopHoc)
 -- maKhoaHoc references khoaHoc, maGiaoVien references giaoVien(maGiaoVien)
@@ -46,4 +44,3 @@ INSERT IGNORE INTO hocSinhLopHoc (maHocSinh, maLop, trangThai) VALUES
 (1, 1, 'Dang_Hoc'),
 (2, 1, 'Dang_Hoc'),
 (1, 2, 'Dang_Hoc');
-
