@@ -36,8 +36,8 @@ INSERT IGNORE INTO khoaHoc (maKhoaHoc, tenKhoaHoc, capDo, moTa) VALUES
 -- MOCK DATA FOR CLASSES (lopHoc)
 -- maKhoaHoc references khoaHoc, maGiaoVien references giaoVien(maGiaoVien)
 INSERT IGNORE INTO lopHoc (maLop, maLopHienThi, maKhoaHoc, maGiaoVien, lichHoc) VALUES
-(1, 'IELTS-F01', 1, 1, 'T2-T4-T6 18:00-19:30'),
-(2, 'GT-CB01', 2, 2, 'T3-T5-T7 19:30-21:00');
+(1, 'IELTS-F01', 1, 1, 'Monday 18:00-19:30, Wednesday 18:00-19:30, Friday 18:00-19:30'),
+(2, 'GT-CB01', 2, 2, 'Tuesday 19:30-21:00, Thursday 19:30-21:00, Saturday 19:30-21:00');
 
 -- MOCK DATA FOR CLASS ASSIGNMENT (hocSinhLopHoc)
 INSERT IGNORE INTO hocSinhLopHoc (maHocSinh, maLop, trangThai) VALUES

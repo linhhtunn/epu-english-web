@@ -14,5 +14,20 @@ export const teacherService = {
             },
         });
         return response.data;
+    },
+
+    getRescheduleOptions: async () => {
+        const response = await api.get("/teacher/reschedule-options");
+        return response.data;
+    },
+
+    getRescheduleRequests: async () => {
+        const response = await api.get("/teacher/reschedule-requests");
+        return response.data;
+    },
+
+    createRescheduleRequest: async (payload) => {
+        const response = await api.post("/teacher/reschedule-requests", payload);
+        return response.data;
     }
 };

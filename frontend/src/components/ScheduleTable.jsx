@@ -1,184 +1,273 @@
 import React, { useMemo } from "react";
+import { getWeekDays } from "../utils/schedule";
+
+const SESSIONS = [
+    { id: "Sáng", label: "Sáng", time: "07:00 - 11:59" },
+    { id: "Chiều", label: "Chiều", time: "12:00 - 17:59" },
+    { id: "Tối", label: "Tối", time: "18:00 - 21:30" },
+];
+
+const TYPE_THEME = {
+    theory: {
+        label: "Chính khóa",
+        surface: "#eef6ff",
+        accent: "#0d6efd",
+        badge: "rgba(13, 110, 253, 0.12)",
+        badgeText: "#0a58ca",
+    },
+    practice: {
+        label: "Bổ trợ",
+        surface: "#f1fff2",
+        accent: "#198754",
+        badge: "rgba(25, 135, 84, 0.14)",
+        badgeText: "#157347",
+    },
+    exam: {
+        label: "Thi / kiểm tra",
+        surface: "#fff8eb",
+        accent: "#fd7e14",
+        badge: "rgba(253, 126, 20, 0.14)",
+        badgeText: "#c55a11",
+    },
+};
+
+const normalizeType = (type) => {
+    const normalized = String(type || "").trim().toLowerCase();
+
+    if (
+        normalized === "practice" ||
+        normalized.includes("bổ trợ") ||
+        normalized.includes("bo tro")
+    ) {
+        return "practice";
+    }
+
+    if (
+        normalized === "exam" ||
+        normalized.includes("thi") ||
+        normalized.includes("kiểm") ||
+        normalized.includes("kiem")
+    ) {
+        return "exam";
+    }
+
+    return "theory";
+};
 
 const ScheduleTable = ({ data = [], currentViewDate }) => {
-    const formatLocalIsoDate = (date) => {
-        const year = date.getFullYear();
-        const month = String(date.getMonth() + 1).padStart(2, "0");
-        const day = String(date.getDate()).padStart(2, "0");
-        return `${year}-${month}-${day}`;
-    };
+    const weekDays = useMemo(() => getWeekDays(currentViewDate), [currentViewDate]);
 
-    // Logic tính toán 7 ngày trong tuần (từ Thứ 2 đến Chủ Nhật)
-    const weekDays = useMemo(() => {
-        const start = new Date(currentViewDate);
-        const day = start.getDay();
-        const diff = start.getDate() - day + (day === 0 ? -6 : 1);
-        const monday = new Date(start.setDate(diff));
+    const scheduleMap = useMemo(() => {
+        return data.reduce((acc, item) => {
+            const key = `${item.date}_${item.slot}`;
+            if (!acc[key]) {
+                acc[key] = [];
+            }
+            acc[key].push(item);
+            return acc;
+        }, {});
+    }, [data]);
 
-        return Array.from({ length: 7 }).map((_, index) => {
-            const d = new Date(monday);
-            d.setDate(monday.getDate() + index);
-            return {
-                name: d.getDay() === 0 ? "Chủ nhật" : `Thứ ${d.getDay() + 1}`,
-                dateDisplay: d.toLocaleDateString("vi-VN"),
-                isoDate: formatLocalIsoDate(d),
-            };
-        });
-    }, [currentViewDate]);
-
-    const sessions = ["Sáng", "Chiều", "Tối"];
+    const totalSessions = data.length;
+    const classCount = new Set(data.map((item) => item.code)).size;
 
     return (
-        <div
-            className="table-responsive border bg-white shadow-sm"
-            style={{ borderRadius: "12px" }}
-        >
-            <table
-                className="table table-bordered mb-0"
-                style={{
-                    width: "100%",
-                    tableLayout: "fixed",
-                    minWidth: "1100px",
-                }}
-            >
-                <thead
-                    className="text-center"
-                    style={{ backgroundColor: "#f0f5f9" }}
+        <div className="rounded-4 border bg-white shadow-sm overflow-hidden">
+            <div className="d-flex flex-wrap justify-content-between gap-3 px-4 py-4 border-bottom bg-light-subtle">
+                <div>
+                    <div className="text-uppercase text-muted fw-semibold small mb-1">
+                        Lịch theo tuần
+                    </div>
+                    <h4 className="fw-bold text-dark mb-0">Bảng hiển thị lịch học</h4>
+                </div>
+
+                <div className="d-flex flex-wrap gap-2">
+                    <span className="badge text-bg-light border px-3 py-2">
+                        {totalSessions} buổi trong tuần
+                    </span>
+                    <span className="badge text-bg-light border px-3 py-2">
+                        {classCount} lớp / môn
+                    </span>
+                </div>
+            </div>
+
+            <div className="table-responsive">
+                <table
+                    className="table align-middle mb-0"
+                    style={{ minWidth: "1160px", tableLayout: "fixed" }}
                 >
-                    <tr>
-                        <th
-                            style={{ width: "80px", color: "#007bff" }}
-                            className="py-3 fw-bold small"
-                        >
-                            Ca học
-                        </th>
-                        {weekDays.map((day) => (
-                            <th key={day.isoDate} className="py-2 border-start">
-                                <div
-                                    style={{
-                                        color: "#007bff",
-                                        fontSize: "14px",
-                                    }}
-                                    className="fw-bold"
-                                >
-                                    {day.name}
-                                </div>
-                                <div
-                                    style={{ color: "#666", fontSize: "11px" }}
-                                >
-                                    {day.dateDisplay}
+                    <thead>
+                        <tr className="border-0">
+                            <th
+                                className="border-0 px-4 py-3 bg-white"
+                                style={{ width: "140px" }}
+                            >
+                                <div className="text-uppercase text-muted small fw-semibold">
+                                    Khung giờ
                                 </div>
                             </th>
-                        ))}
-                    </tr>
-                </thead>
-                <tbody>
-                    {sessions.map((session) => (
-                        <tr key={session}>
-                            <td
-                                className="text-center align-middle fw-bold"
-                                style={{
-                                    backgroundColor: "#fffdf0",
-                                    color: "#555",
-                                }}
-                            >
-                                {session}
-                            </td>
-                            {weekDays.map((day) => {
-                                // Lọc dữ liệu khớp chính xác Ngày và Ca học
-                                const classes = data.filter(
-                                    (item) =>
-                                        item.date === day.isoDate &&
-                                        item.slot === session,
-                                );
-                                return (
-                                    <td
-                                        key={day.isoDate}
-                                        className="p-2 border-start"
+
+                            {weekDays.map((day) => (
+                                <th
+                                    key={day.isoDate}
+                                    className="border-0 px-3 py-3 bg-white"
+                                >
+                                    <div
+                                        className={`rounded-4 border px-3 py-3 ${
+                                            day.isToday ? "shadow-sm" : ""
+                                        }`}
                                         style={{
-                                            verticalAlign: "top",
-                                            minHeight: "180px",
+                                            backgroundColor: day.isToday
+                                                ? "#ecf4ff"
+                                                : "#f8fafc",
+                                            borderColor: day.isToday
+                                                ? "#bfdbfe"
+                                                : "#e2e8f0",
                                         }}
                                     >
-                                        {classes.map((item, idx) =>
-                                            (() => {
-                                                const sessionType =
-                                                    item.type || "theory";
-                                                const backgroundColor =
-                                                    sessionType === "practice"
-                                                        ? "#f6ffed"
-                                                        : sessionType === "exam"
-                                                          ? "#fff7e6"
-                                                          : "#f0f7ff";
-                                                const borderColor =
-                                                    sessionType === "practice"
-                                                        ? "#52c41a"
-                                                        : sessionType === "exam"
-                                                          ? "#fa8c16"
-                                                          : "#007bff";
+                                        <div className="d-flex align-items-center justify-content-between mb-1">
+                                            <span className="fw-bold text-dark">
+                                                {day.label}
+                                            </span>
+                                            {day.isToday && (
+                                                <span className="badge text-bg-primary rounded-pill">
+                                                    Hôm nay
+                                                </span>
+                                            )}
+                                        </div>
+                                        <div className="text-muted small">
+                                            {day.dateNumber}/{day.monthNumber}
+                                        </div>
+                                    </div>
+                                </th>
+                            ))}
+                        </tr>
+                    </thead>
 
-                                                return (
+                    <tbody>
+                        {SESSIONS.map((session) => (
+                            <tr key={session.id}>
+                                <td className="px-4 py-3 bg-light-subtle border-end">
+                                    <div className="fw-bold text-dark">{session.label}</div>
+                                    <div className="small text-muted">{session.time}</div>
+                                </td>
+
+                                {weekDays.map((day) => {
+                                    const key = `${day.isoDate}_${session.id}`;
+                                    const sessionsInCell = scheduleMap[key] || [];
+
+                                    return (
+                                        <td
+                                            key={key}
+                                            className="p-3 align-top"
+                                            style={{ backgroundColor: "#fcfdff" }}
+                                        >
+                                            <div
+                                                className="d-flex flex-column gap-2"
+                                                style={{ minHeight: "180px" }}
+                                            >
+                                                {sessionsInCell.length === 0 && (
                                                     <div
-                                                        key={idx}
-                                                        className="p-3 mb-2 border d-flex flex-column shadow-sm"
+                                                        className="rounded-4 border border-dashed text-center text-muted d-flex flex-column justify-content-center px-3 py-4 h-100"
                                                         style={{
-                                                            backgroundColor,
-                                                            borderLeft: `5px solid ${borderColor}`,
-                                                            borderRadius: "6px",
-                                                            fontSize: "12px",
-                                                            lineHeight: "1.5",
+                                                            minHeight: "160px",
+                                                            backgroundColor: "#f8fafc",
+                                                            borderStyle: "dashed",
                                                         }}
                                                     >
-                                                        <div
-                                                            className="fw-bold mb-2"
-                                                            style={{
-                                                                color: "#003366",
-                                                                fontSize:
-                                                                    "13px",
-                                                            }}
-                                                        >
-                                                            {item.subject}
+                                                        <div className="fw-semibold mb-1">
+                                                            Trống lịch
                                                         </div>
-                                                        <div className="text-muted small mb-2">
-                                                            {item.code}
-                                                        </div>
-                                                        <div className="d-flex flex-column gap-1">
-                                                            <div>
-                                                                <b>Tiết:</b>{" "}
-                                                                {item.period}
-                                                            </div>
-                                                            <div>
-                                                                <b>Giờ:</b>{" "}
-                                                                {item.time}
-                                                            </div>
-                                                            <div>
-                                                                <b>Phòng:</b>{" "}
-                                                                <span className="text-danger fw-bold">
-                                                                    {item.room}
-                                                                </span>
-                                                            </div>
-                                                            <div
-                                                                className="text-dark mt-1"
-                                                                style={{
-                                                                    whiteSpace:
-                                                                        "normal",
-                                                                }}
-                                                            >
-                                                                <b>GV:</b>{" "}
-                                                                {item.teacher}
-                                                            </div>
+                                                        <div className="small">
+                                                            Không có buổi học trong khung này
                                                         </div>
                                                     </div>
-                                                );
-                                            })(),
-                                        )}
-                                    </td>
-                                );
-                            })}
-                        </tr>
-                    ))}
-                </tbody>
-            </table>
+                                                )}
+
+                                                {sessionsInCell.map((item, index) => {
+                                                    const theme =
+                                                        TYPE_THEME[normalizeType(item.type)];
+
+                                                    return (
+                                                        <div
+                                                            key={`${item.code}_${item.time}_${index}`}
+                                                            className="rounded-4 border shadow-sm p-3"
+                                                            style={{
+                                                                backgroundColor: theme.surface,
+                                                                borderLeft: `5px solid ${theme.accent}`,
+                                                                borderColor: "rgba(15, 23, 42, 0.08)",
+                                                            }}
+                                                        >
+                                                            <div className="d-flex justify-content-between align-items-start gap-2 mb-2">
+                                                                <div>
+                                                                    <div className="fw-bold text-dark mb-1">
+                                                                        {item.subject}
+                                                                    </div>
+                                                                    <div className="small text-muted">
+                                                                        {item.code}
+                                                                    </div>
+                                                                </div>
+
+                                                                <span
+                                                                    className="badge rounded-pill px-3 py-2"
+                                                                    style={{
+                                                                        backgroundColor:
+                                                                            theme.badge,
+                                                                        color: theme.badgeText,
+                                                                    }}
+                                                                >
+                                                                    {theme.label}
+                                                                </span>
+                                                            </div>
+
+                                                            <div className="d-flex flex-column gap-1 small text-dark">
+                                                                <div>
+                                                                    <i className="bi bi-clock me-2 text-muted" />
+                                                                    {item.time}
+                                                                </div>
+                                                                <div>
+                                                                    <i className="bi bi-grid me-2 text-muted" />
+                                                                    Tiết {item.period}
+                                                                </div>
+                                                                <div>
+                                                                    <i className="bi bi-geo-alt me-2 text-muted" />
+                                                                    {item.room}
+                                                                </div>
+                                                                <div>
+                                                                    <i className="bi bi-person me-2 text-muted" />
+                                                                    {item.teacher}
+                                                                </div>
+                                                            </div>
+                                                        </div>
+                                                    );
+                                                })}
+                                            </div>
+                                        </td>
+                                    );
+                                })}
+                            </tr>
+                        ))}
+                    </tbody>
+                </table>
+            </div>
+
+            <div className="d-flex flex-wrap gap-3 px-4 py-3 border-top bg-white">
+                {Object.entries(TYPE_THEME).map(([key, theme]) => (
+                    <div key={key} className="d-flex align-items-center gap-2 small">
+                        <span
+                            className="rounded-pill"
+                            style={{
+                                width: "18px",
+                                height: "18px",
+                                backgroundColor: theme.surface,
+                                borderLeft: `4px solid ${theme.accent}`,
+                                display: "inline-block",
+                            }}
+                        />
+                        <span className="text-muted">{theme.label}</span>
+                    </div>
+                ))}
+            </div>
         </div>
     );
 };

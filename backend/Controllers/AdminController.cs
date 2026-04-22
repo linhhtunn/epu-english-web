@@ -5,6 +5,9 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using backend.Data;
+using backend.DTOs;
+using backend.Models;
+using backend.Services.Interfaces;
 
 namespace QuanLyTrungTam.Controllers
 {
@@ -14,10 +17,12 @@ namespace QuanLyTrungTam.Controllers
     public class AdminController : ControllerBase
     {
         private readonly AppDbContext _context;
+        private readonly ISchedulePlannerService _schedulePlannerService;
 
-        public AdminController(AppDbContext context)
+        public AdminController(AppDbContext context, ISchedulePlannerService schedulePlannerService)
         {
             _context = context;
+            _schedulePlannerService = schedulePlannerService;
         }
 
         [HttpGet("dashboard")]
@@ -42,7 +47,10 @@ namespace QuanLyTrungTam.Controllers
                 id = b.MaLopNavigation.MaLopHienThi,
                 course = b.MaLopNavigation.MaKhoaHocNavigation.TenKhoaHoc,
                 teacher = b.MaGiaoVienNavigation?.MaNguoiDungNavigation?.HoTen ?? "Ban Khảo Thí",
-                room = $"Phòng {b.MaLop % 5 + 1}0{b.MaLop % 9 + 1}", // Mocked room using math hash
+                room = _context.ChiTietXepLiches
+                    .Where(c => c.MaBuoiHoc == b.MaBuoiHoc)
+                    .Select(c => c.MaPhongHocNavigation.TenPhong)
+                    .FirstOrDefault() ?? $"Phòng {b.MaLop % 5 + 1}0{b.MaLop % 9 + 1}",
                 time = b.GioBatDau.ToString("HH\\:mm") + " - " + b.GioKetThuc.ToString("HH\\:mm"),
                 status = b.GioKetThuc < currentTime ? "Đã xong" : (b.GioBatDau <= currentTime ? "Đang học" : "Sắp bắt đầu")
             });
@@ -51,7 +59,7 @@ namespace QuanLyTrungTam.Controllers
             {
                 totalStudentsCount = string.Format("{0:N0}", totalStudents),
                 totalCoursesCount = totalCourses.ToString(),
-                monthlyRevenue = "540M", // MOCK: DB chưa có bảng GiaoDich/HoaDon
+                monthlyRevenue = "540M",
                 todayClassesCount = rawTodayClasses.Count.ToString()
             };
 
@@ -78,28 +86,164 @@ namespace QuanLyTrungTam.Controllers
                 .Include(b => b.MaLopNavigation)
                 .Include(b => b.MaGiaoVienNavigation).ThenInclude(g => g.MaNguoiDungNavigation)
                 .Where(b => b.NgayHoc >= from && b.NgayHoc <= to)
+                .OrderBy(b => b.NgayHoc)
+                .ThenBy(b => b.GioBatDau)
                 .ToListAsync();
 
-            var scheduledClasses = rawSessions.Select(b => new
+            var scheduledClasses = rawSessions.Select(b =>
             {
-                id = b.MaBuoiHoc,
-                classCode = b.MaLopNavigation.MaLopHienThi,
-                teacher = b.MaGiaoVienNavigation?.MaNguoiDungNavigation?.HoTen ?? "N/A",
-                room = $"Phòng {b.MaLop % 5 + 1}0{b.MaLop % 9 + 1}",
-                dayIdx = GetDayIdx(b.NgayHoc.DayOfWeek),
-                slotId = GetSlotId(b.GioBatDau),
-                isConflict = false,
-                conflictReason = (string?)null
+                var scheduleDetail = _context.ChiTietXepLiches
+                    .Where(c => c.MaBuoiHoc == b.MaBuoiHoc && c.TrangThai == "Hoat_Dong")
+                    .Select(c => new
+                    {
+                        c.MaPhongHoc,
+                        c.MaKhungGio,
+                        Room = c.MaPhongHocNavigation.TenPhong
+                    })
+                    .FirstOrDefault();
+
+                return new
+                {
+                    id = b.MaBuoiHoc,
+                    maBuoiHoc = b.MaBuoiHoc,
+                    maLop = b.MaLop,
+                    maGiaoVien = b.MaGiaoVien,
+                    classCode = b.MaLopNavigation.MaLopHienThi,
+                    teacher = b.MaGiaoVienNavigation?.MaNguoiDungNavigation?.HoTen ?? "N/A",
+                    room = scheduleDetail?.Room ?? $"Phòng {b.MaLop % 5 + 1}0{b.MaLop % 9 + 1}",
+                    maPhongHoc = scheduleDetail?.MaPhongHoc,
+                    maKhungGio = scheduleDetail?.MaKhungGio,
+                    date = b.NgayHoc.ToString("yyyy-MM-dd"),
+                    time = b.GioBatDau.ToString("HH\\:mm") + " - " + b.GioKetThuc.ToString("HH\\:mm"),
+                    dayIdx = GetDayIdx(b.NgayHoc.DayOfWeek),
+                    slotId = GetSlotId(b.GioBatDau),
+                    isConflict = false,
+                    conflictReason = (string?)null
+                };
             });
 
-            // MOCK: DB chưa có bảng YeuCauDoiLich, trả mảng rỗng
-            var rescheduleRequests = Array.Empty<object>();
+            var rawRescheduleRequests = await _context.YeuCauDoiLiches
+                .Include(r => r.MaBuoiHocNavigation).ThenInclude(b => b.MaLopNavigation)
+                .Include(r => r.MaGiaoVienNavigation).ThenInclude(g => g.MaNguoiDungNavigation)
+                .Include(r => r.MaKhungGioDeXuatNavigation)
+                .Include(r => r.MaPhongHocDeXuatNavigation)
+                .Where(r => r.TrangThai == "Cho_Duyet")
+                .OrderByDescending(r => r.NgayTao)
+                .ToListAsync();
+
+            var rescheduleRequests = rawRescheduleRequests.Select(r => new
+            {
+                id = r.MaYeuCau,
+                maBuoiHoc = r.MaBuoiHoc,
+                maLop = r.MaBuoiHocNavigation.MaLop,
+                maGiaoVien = r.MaGiaoVien,
+                classCode = r.MaBuoiHocNavigation.MaLopNavigation.MaLopHienThi,
+                teacher = r.MaGiaoVienNavigation.MaNguoiDungNavigation.HoTen,
+                currentDate = r.MaBuoiHocNavigation.NgayHoc.ToString("yyyy-MM-dd"),
+                currentTime = r.MaBuoiHocNavigation.GioBatDau.ToString("HH\\:mm") + " - " + r.MaBuoiHocNavigation.GioKetThuc.ToString("HH\\:mm"),
+                requestedDate = r.NgayDeXuatMoi.ToString("yyyy-MM-dd"),
+                requestedSlotId = r.MaKhungGioDeXuat,
+                requestedSlotLabel = r.MaKhungGioDeXuatNavigation.TenKhungGio,
+                requestedSlotTime = r.MaKhungGioDeXuatNavigation.GioBatDau.ToString("HH\\:mm") + " - " + r.MaKhungGioDeXuatNavigation.GioKetThuc.ToString("HH\\:mm"),
+                requestedRoomId = r.MaPhongHocDeXuat,
+                requestedRoom = r.MaPhongHocDeXuatNavigation != null ? r.MaPhongHocDeXuatNavigation.TenPhong : null,
+                lyDo = r.LyDo,
+                ngayTao = r.NgayTao.ToString("yyyy-MM-dd HH:mm")
+            }).ToList();
 
             return Ok(new
             {
                 scheduledClasses,
                 rescheduleRequests
             });
+        }
+
+        [HttpGet("schedule/options")]
+        public async Task<IActionResult> GetScheduleOptions()
+        {
+            var result = await _schedulePlannerService.GetScheduleOptionsAsync();
+            return Ok(result);
+        }
+
+        [HttpGet("schedule/availability")]
+        public async Task<IActionResult> GetAvailability([FromQuery] int maLop, [FromQuery] DateOnly ngayHoc, [FromQuery] int? maGiaoVien)
+        {
+            var result = await _schedulePlannerService.GetAvailabilityAsync(maLop, ngayHoc, maGiaoVien);
+            return Ok(result);
+        }
+
+        [HttpPost("schedule/manual")]
+        public async Task<IActionResult> CreateManualSchedule([FromBody] ScheduleManualCreateDto dto)
+        {
+            var result = await _schedulePlannerService.CreateManualScheduleAsync(dto, User);
+            return StatusCode(result.StatusCode, result.Payload);
+        }
+
+        [HttpPost("schedule/auto")]
+        public async Task<IActionResult> CreateAutoSchedule([FromBody] ScheduleAutoCreateDto dto)
+        {
+            var result = await _schedulePlannerService.CreateAutoScheduleAsync(dto, User);
+            return StatusCode(result.StatusCode, result.Payload);
+        }
+
+        [HttpPost("reschedule-requests/{requestId}/process")]
+        public async Task<IActionResult> ProcessRescheduleRequest(int requestId, [FromBody] AdminRescheduleProcessDto dto)
+        {
+            var result = await _schedulePlannerService.ProcessRescheduleRequestAsync(requestId, dto, User);
+
+            if (result.Success)
+            {
+                await NotifyTeacherAfterRescheduleProcessedAsync(requestId, dto.TrangThai, dto.GhiChuXuLy);
+            }
+
+            return StatusCode(result.StatusCode, result.Payload);
+        }
+
+        private async Task NotifyTeacherAfterRescheduleProcessedAsync(int requestId, string status, string? processingNote)
+        {
+            var request = await _context.YeuCauDoiLiches
+                .Include(r => r.MaGiaoVienNavigation).ThenInclude(g => g.MaNguoiDungNavigation)
+                .Include(r => r.MaBuoiHocNavigation).ThenInclude(b => b.MaLopNavigation)
+                .FirstOrDefaultAsync(r => r.MaYeuCau == requestId);
+
+            if (request == null)
+            {
+                return;
+            }
+
+            var teacherUserId = request.MaGiaoVienNavigation.MaNguoiDung;
+            var title = status == "Da_Duyet"
+                ? "Yêu cầu đổi lịch đã được duyệt"
+                : "Yêu cầu đổi lịch đã bị từ chối";
+
+            var content = status == "Da_Duyet"
+                ? $"Admin đã cập nhật lịch cho lớp {request.MaBuoiHocNavigation.MaLopNavigation.MaLopHienThi}."
+                : $"Admin đã từ chối yêu cầu đổi lịch của lớp {request.MaBuoiHocNavigation.MaLopNavigation.MaLopHienThi}.";
+
+            if (!string.IsNullOrWhiteSpace(processingNote))
+            {
+                content += $" Ghi chú: {processingNote}";
+            }
+
+            var thongBao = new ThongBao
+            {
+                TieuDe = title,
+                NoiDung = content,
+                LoaiThongBao = "Dieu_Phoi_Lich",
+                NgayGui = DateTime.Now
+            };
+
+            _context.ThongBaos.Add(thongBao);
+            await _context.SaveChangesAsync();
+
+            _context.NguoiNhanThongBaos.Add(new NguoiNhanThongBao
+            {
+                MaThongBao = thongBao.MaThongBao,
+                MaNguoiDung = teacherUserId,
+                DaDoc = false
+            });
+
+            await _context.SaveChangesAsync();
         }
 
         private static int GetDayIdx(DayOfWeek dayOfWeek)

@@ -21,9 +21,13 @@ public partial class BuoiHoc
 
     public string? GhiChu { get; set; }
 
+    public virtual ICollection<ChiTietXepLich> ChiTietXepLiches { get; set; } = new List<ChiTietXepLich>();
+
     public virtual ICollection<DiemDanh> DiemDanhs { get; set; } = new List<DiemDanh>();
 
     public virtual GiaoVien MaGiaoVienNavigation { get; set; } = null!;
 
     public virtual LopHoc MaLopNavigation { get; set; } = null!;
+
+    public virtual ICollection<YeuCauDoiLich> YeuCauDoiLiches { get; set; } = new List<YeuCauDoiLich>();
 }

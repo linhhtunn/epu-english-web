@@ -81,10 +81,18 @@ public partial class AppDbContext : DbContext
 
     public virtual DbSet<VaiTro> VaiTros { get; set; }
 
+    public virtual DbSet<YeuCauDoiLich> YeuCauDoiLiches { get; set; }
+
     public virtual DbSet<YeuCauVaoLop> YeuCauVaoLops { get; set; }
 
     protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
-        => optionsBuilder.UseMySql("server=localhost;port=3306;database=QuanLyTrungTam;user=root", Microsoft.EntityFrameworkCore.ServerVersion.Parse("10.4.28-mariadb"));
+    {
+        // Connection is configured centrally in Program.cs via DI.
+        if (optionsBuilder.IsConfigured)
+        {
+            return;
+        }
+    }
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
@@ -1233,6 +1241,86 @@ public partial class AppDbContext : DbContext
             entity.Property(e => e.TenVaiTro)
                 .HasMaxLength(50)
                 .HasColumnName("tenVaiTro");
+        });
+
+        modelBuilder.Entity<YeuCauDoiLich>(entity =>
+        {
+            entity.HasKey(e => e.MaYeuCau).HasName("PRIMARY");
+
+            entity.ToTable("yeuCauDoiLich");
+
+            entity.HasIndex(e => e.MaBuoiHoc, "fk_ycdl_buoihoc");
+
+            entity.HasIndex(e => e.MaGiaoVien, "fk_ycdl_giaovien");
+
+            entity.HasIndex(e => e.MaKhungGioDeXuat, "fk_ycdl_khunggio");
+
+            entity.HasIndex(e => e.MaNguoiXuLy, "fk_ycdl_nguoixuly");
+
+            entity.HasIndex(e => e.MaPhongHocDeXuat, "fk_ycdl_phonghoc");
+
+            entity.Property(e => e.MaYeuCau)
+                .HasColumnType("int(11)")
+                .HasColumnName("maYeuCau");
+            entity.Property(e => e.GhiChuXuLy)
+                .HasMaxLength(500)
+                .HasColumnName("ghiChuXuLy");
+            entity.Property(e => e.LyDo)
+                .HasMaxLength(500)
+                .HasColumnName("lyDo");
+            entity.Property(e => e.MaBuoiHoc)
+                .HasColumnType("int(11)")
+                .HasColumnName("maBuoiHoc");
+            entity.Property(e => e.MaGiaoVien)
+                .HasColumnType("int(11)")
+                .HasColumnName("maGiaoVien");
+            entity.Property(e => e.MaKhungGioDeXuat)
+                .HasColumnType("int(11)")
+                .HasColumnName("maKhungGioDeXuat");
+            entity.Property(e => e.MaNguoiXuLy)
+                .HasColumnType("int(11)")
+                .HasColumnName("maNguoiXuLy");
+            entity.Property(e => e.MaPhongHocDeXuat)
+                .HasColumnType("int(11)")
+                .HasColumnName("maPhongHocDeXuat");
+            entity.Property(e => e.NgayDeXuatMoi)
+                .HasColumnName("ngayDeXuatMoi");
+            entity.Property(e => e.NgayTao)
+                .HasDefaultValueSql("current_timestamp()")
+                .HasColumnType("datetime")
+                .HasColumnName("ngayTao");
+            entity.Property(e => e.NgayXuLy)
+                .HasColumnType("datetime")
+                .HasColumnName("ngayXuLy");
+            entity.Property(e => e.TrangThai)
+                .HasMaxLength(20)
+                .HasDefaultValueSql("'Cho_Duyet'")
+                .HasColumnName("trangThai");
+
+            entity.HasOne(d => d.MaBuoiHocNavigation).WithMany(p => p.YeuCauDoiLiches)
+                .HasForeignKey(d => d.MaBuoiHoc)
+                .OnDelete(DeleteBehavior.ClientSetNull)
+                .HasConstraintName("fk_ycdl_buoihoc");
+
+            entity.HasOne(d => d.MaGiaoVienNavigation).WithMany(p => p.YeuCauDoiLiches)
+                .HasForeignKey(d => d.MaGiaoVien)
+                .OnDelete(DeleteBehavior.ClientSetNull)
+                .HasConstraintName("fk_ycdl_giaovien");
+
+            entity.HasOne(d => d.MaKhungGioDeXuatNavigation).WithMany()
+                .HasForeignKey(d => d.MaKhungGioDeXuat)
+                .OnDelete(DeleteBehavior.ClientSetNull)
+                .HasConstraintName("fk_ycdl_khunggio");
+
+            entity.HasOne(d => d.MaNguoiXuLyNavigation).WithMany(p => p.YeuCauDoiLiches)
+                .HasForeignKey(d => d.MaNguoiXuLy)
+                .OnDelete(DeleteBehavior.SetNull)
+                .HasConstraintName("fk_ycdl_nguoixuly");
+
+            entity.HasOne(d => d.MaPhongHocDeXuatNavigation).WithMany()
+                .HasForeignKey(d => d.MaPhongHocDeXuat)
+                .OnDelete(DeleteBehavior.SetNull)
+                .HasConstraintName("fk_ycdl_phonghoc");
         });
 
         modelBuilder.Entity<YeuCauVaoLop>(entity =>

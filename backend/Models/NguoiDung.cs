@@ -42,4 +42,6 @@ public partial class NguoiDung
     public virtual QuanTriVien? QuanTriVien { get; set; }
 
     public virtual ICollection<ThongBao> ThongBaos { get; set; } = new List<ThongBao>();
+
+    public virtual ICollection<YeuCauDoiLich> YeuCauDoiLiches { get; set; } = new List<YeuCauDoiLich>();
 }

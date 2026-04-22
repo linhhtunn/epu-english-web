@@ -326,6 +326,26 @@ CREATE TABLE yeuCauVaoLop (
     CONSTRAINT fk_ycvl_lop FOREIGN KEY (maLop) REFERENCES lopHoc(maLop)
 );
 
+CREATE TABLE yeuCauDoiLich (
+    maYeuCau INT AUTO_INCREMENT PRIMARY KEY,
+    maBuoiHoc INT NOT NULL,
+    maGiaoVien INT NOT NULL,
+    ngayDeXuatMoi DATE NOT NULL,
+    maKhungGioDeXuat INT NOT NULL,
+    maPhongHocDeXuat INT NULL,
+    lyDo VARCHAR(500),
+    trangThai VARCHAR(20) DEFAULT 'Cho_Duyet' CHECK (trangThai IN ('Cho_Duyet', 'Da_Duyet', 'Tu_Choi')),
+    maNguoiXuLy INT NULL,
+    ngayTao DATETIME DEFAULT CURRENT_TIMESTAMP,
+    ngayXuLy DATETIME NULL,
+    ghiChuXuLy VARCHAR(500),
+    CONSTRAINT fk_ycdl_buoihoc FOREIGN KEY (maBuoiHoc) REFERENCES buoiHoc(maBuoiHoc),
+    CONSTRAINT fk_ycdl_giaovien FOREIGN KEY (maGiaoVien) REFERENCES giaoVien(maGiaoVien),
+    CONSTRAINT fk_ycdl_khunggio FOREIGN KEY (maKhungGioDeXuat) REFERENCES khungGioHoc(maKhungGio),
+    CONSTRAINT fk_ycdl_phonghoc FOREIGN KEY (maPhongHocDeXuat) REFERENCES phongHoc(maPhongHoc) ON DELETE SET NULL,
+    CONSTRAINT fk_ycdl_nguoixuly FOREIGN KEY (maNguoiXuLy) REFERENCES nguoiDung(maNguoiDung) ON DELETE SET NULL
+);
+
 CREATE TABLE chuDeBaiGiang (
     maChuDe INT AUTO_INCREMENT PRIMARY KEY,
     maLop INT NOT NULL,

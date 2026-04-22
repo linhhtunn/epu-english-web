@@ -186,6 +186,10 @@ public class StudentController : ControllerBase
                 Code = b.MaLopNavigation.MaLopHienThi,
                 Teacher = b.MaGiaoVienNavigation.MaNguoiDungNavigation.HoTen,
                 Note = b.GhiChu,
+                Room = _context.ChiTietXepLiches
+                    .Where(c => c.MaBuoiHoc == b.MaBuoiHoc)
+                    .Select(c => c.MaPhongHocNavigation.TenPhong)
+                    .FirstOrDefault(),
             })
             .ToListAsync();
 
@@ -197,7 +201,7 @@ public class StudentController : ControllerBase
             code = b.Code,
             period = GetPeriod(b.GioBatDau),
             time = b.GioBatDau.ToString("HH\\:mm") + " - " + b.GioKetThuc.ToString("HH\\:mm"),
-            room = $"Phòng {b.MaLop % 5 + 1}0{b.MaLop % 9 + 1}", // MOCK: DB chưa có cột PhongHoc
+            room = b.Room ?? $"Phòng {b.MaLop % 5 + 1}0{b.MaLop % 9 + 1}",
             teacher = b.Teacher,
             type = GetSessionType(b.Note)
         });

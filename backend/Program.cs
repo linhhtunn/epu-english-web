@@ -1,6 +1,8 @@
 using Microsoft.EntityFrameworkCore;
 using backend.Data;
 using backend.Helpers;
+using backend.Services;
+using backend.Services.Interfaces;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.IdentityModel.Tokens;
 using Microsoft.OpenApi.Models;
@@ -36,6 +38,7 @@ builder.Services.AddControllers().AddJsonOptions(options =>
 });
 
 builder.Services.AddScoped<JwtHelper>();
+builder.Services.AddScoped<ISchedulePlannerService, SchedulePlannerService>();
 
 builder.Services
     .AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
@@ -120,6 +123,7 @@ app.UseAuthentication();
 app.UseAuthorization();
 
 // 7. Cấu hình Route
+app.MapGet("/", () => Results.Redirect("/swagger/index.html"));
 app.MapControllers();
 
 app.Run();
