@@ -13,6 +13,7 @@ const AdminAssignStudent = () => {
     const [selected, setSelected] = useState([]);
 
     useEffect(() => {
+        document.title = "Gán học viên | EPU English";
         if (!classId) {
             alert("Không tìm thấy thông tin lớp học!");
             navigate("/admin/classes");
@@ -23,10 +24,25 @@ const AdminAssignStudent = () => {
 
     const fetchStudents = async () => {
         try {
-            const users = await userService.getAllUsers();
-            // Filter for Hoc_Sinh
-            const studentUsers = users.filter((u) => u.roleName === "Hoc_Sinh");
-            setStudents(studentUsers);
+            const [users, enrolledStudents] = await Promise.all([
+                userService.getAllUsers(),
+                classService.getStudentsInClass(classId)
+            ]);
+
+            const enrolledUserIds = new Set(
+                enrolledStudents.map((s) => s.maNguoiDung ?? s.MaNguoiDung),
+            );
+
+            // Filter for Hoc_Sinh and NOT already enrolled
+            const availableStudents = users.filter((u) => {
+                const uId = u.maNguoiDung ?? u.MaNguoiDung;
+                return (
+                    (u.roleName === "Hoc_Sinh" || u.RoleName === "Hoc_Sinh") &&
+                    !enrolledUserIds.has(uId)
+                );
+            });
+
+            setStudents(availableStudents);
         } catch (error) {
             console.error("Lỗi khi tải danh sách học viên", error);
         } finally {
@@ -46,18 +62,30 @@ const AdminAssignStudent = () => {
         if (selected.length === 0) return;
 
         let successCount = 0;
+        let errors = [];
+
         for (const userId of selected) {
             try {
                 await classService.assignStudent(classId, userId);
                 successCount++;
             } catch (error) {
                 console.error(`Lỗi khi gán học sinh ${userId}`, error);
+                const errorMsg = error.response?.data || "Lỗi không xác định";
+                errors.push(`ID ${userId}: ${errorMsg}`);
             }
         }
-        alert(
-            `Đã gán thành công ${successCount}/${selected.length} học viên vào lớp!`,
-        );
+
+        if (errors.length > 0) {
+            alert(
+                `Kết quả: Gán thành công ${successCount}/${selected.length} học viên.\n\nLỗi:\n${errors.join("\n")}`,
+            );
+        } else {
+            alert(
+                `Đã gán thành công toàn bộ ${successCount} học viên vào lớp!`,
+            );
+        }
         setSelected([]);
+        fetchStudents();
     };
 
     return (

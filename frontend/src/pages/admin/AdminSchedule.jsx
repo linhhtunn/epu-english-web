@@ -50,6 +50,7 @@ const AdminSchedule = () => {
     };
 
     useEffect(() => {
+        document.title = "Điều phối lịch | EPU English";
         const fetchSchedule = async () => {
             try {
                 setLoading(true);

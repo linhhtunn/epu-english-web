@@ -34,6 +34,7 @@ const Dashboard = () => {
     };
 
     useEffect(() => {
+        document.title = "Bảng điều khiển Học sinh | EPU English";
         fetchDashboard();
     }, [user?.profileId]);
 

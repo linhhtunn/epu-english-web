@@ -7,18 +7,58 @@ const AdminClasses = () => {
     const [classes, setClasses] = useState([]);
     const [loading, setLoading] = useState(true);
 
+    const [selectedClass, setSelectedClass] = useState(null);
+    const [classStudents, setClassStudents] = useState([]);
+    const [loadingStudents, setLoadingStudents] = useState(false);
+    const [showModal, setShowModal] = useState(false);
+
     useEffect(() => {
+        document.title = "Quản lý lớp học | EPU English";
         fetchClasses();
     }, []);
 
     const fetchClasses = async () => {
+        setLoading(true);
         try {
-            const data = await classService.getAllClasses();
+            const data = await classService.getAllClasses(true); // Force reload to get updated count
             setClasses(data);
         } catch (error) {
             console.error("Lỗi khi tải danh sách lớp học:", error);
         } finally {
             setLoading(false);
+        }
+    };
+
+    const handleViewClass = async (cls) => {
+        setSelectedClass(cls);
+        setShowModal(true);
+        setLoadingStudents(true);
+        try {
+            const students = await classService.getStudentsInClass(cls.maLop);
+            setClassStudents(students);
+        } catch (error) {
+            console.error("Lỗi khi tải danh sách học viên:", error);
+        } finally {
+            setLoadingStudents(false);
+        }
+    };
+
+    const handleRemoveStudent = async (studentId) => {
+        if (!window.confirm("Bạn có chắc chắn muốn xóa học viên này khỏi lớp?"))
+            return;
+
+        try {
+            await classService.removeStudent(selectedClass.maLop, studentId);
+            // Refresh student list
+            const students = await classService.getStudentsInClass(
+                selectedClass.maLop,
+            );
+            setClassStudents(students);
+            // Refresh class list to update count
+            fetchClasses();
+        } catch (error) {
+            console.error("Lỗi khi xóa học viên:", error);
+            alert("Xóa học viên thất bại!");
         }
     };
 
@@ -164,7 +204,7 @@ const AdminClasses = () => {
 
                                         <td>
                                             <span className="badge bg-info">
-                                                -
+                                                {cls.studentCount || 0}
                                             </span>
                                         </td>
 
@@ -176,7 +216,11 @@ const AdminClasses = () => {
 
                                         <td>
                                             <div className="btn-group">
-                                                <button className="btn btn-light border">
+                                                <button 
+                                                    className="btn btn-light border"
+                                                    onClick={() => handleViewClass(cls)}
+                                                    title="Xem danh sách học viên"
+                                                >
                                                     <i className="bi bi-eye"></i>
                                                 </button>
                                                 <button
@@ -243,6 +287,112 @@ const AdminClasses = () => {
                     </small>
                 </div>
             </div>
+
+            {/* MODAL DANH SÁCH HỌC VIÊN */}
+            {showModal && (
+                <div 
+                    className="modal fade show d-block" 
+                    tabIndex="-1" 
+                    style={{ backgroundColor: "rgba(0,0,0,0.5)" }}
+                >
+                    <div className="modal-dialog modal-lg modal-dialog-centered">
+                        <div className="modal-content border-0 shadow-lg rounded-4">
+                            <div className="modal-header border-0 pb-0">
+                                <h5 className="fw-bold text-primary">
+                                    <i className="bi bi-people-fill me-2"></i>
+                                    Danh sách học viên - {selectedClass?.maLopHienThi}
+                                </h5>
+                                <button 
+                                    type="button" 
+                                    className="btn-close" 
+                                    onClick={() => setShowModal(false)}
+                                ></button>
+                            </div>
+                            <div className="modal-body p-4">
+                                <p className="text-muted small mb-4">
+                                    Khóa học: {selectedClass?.courseName} | Giáo viên: {selectedClass?.teacherName || "N/A"}
+                                </p>
+
+                                {loadingStudents ? (
+                                    <div className="text-center py-5">
+                                        <div className="spinner-border text-primary" role="status"></div>
+                                        <p className="mt-2 text-muted">Đang tải danh sách học viên...</p>
+                                    </div>
+                                ) : classStudents.length === 0 ? (
+                                    <div className="text-center py-5 bg-light rounded-4">
+                                        <i className="bi bi-person-x fs-1 text-muted"></i>
+                                        <p className="mt-2 text-muted">Chưa có học viên nào trong lớp này.</p>
+                                    </div>
+                                ) : (
+                                    <div className="table-responsive">
+                                        <table className="table table-hover align-middle">
+                                            <thead className="table-light">
+                                                <tr>
+                                                    <th>ID</th>
+                                                    <th>Họ tên</th>
+                                                    <th>Email</th>
+                                                    <th>Trạng thái</th>
+                                                    <th>Ngày tham gia</th>
+                                                    <th>Thao tác</th>
+                                                </tr>
+                                            </thead>
+                                            <tbody>
+                                                {classStudents.map((st) => (
+                                                    <tr key={st.maHocSinh || st.MaHocSinh}>
+                                                        <td>{st.maHocSinh || st.MaHocSinh}</td>
+                                                        <td className="fw-semibold">{st.hoTen || st.HoTen}</td>
+                                                        <td>{st.email || st.Email}</td>
+                                                        <td>
+                                                            <span className={`badge ${(st.trangThai || st.TrangThai) === 'Dang_Hoc' ? 'bg-success' : 'bg-secondary'}`}>
+                                                                {(st.trangThai || st.TrangThai) === 'Dang_Hoc' ? 'Đang học' : (st.trangThai || st.TrangThai)}
+                                                            </span>
+                                                        </td>
+                                                        <td>{(st.ngayThamGia || st.NgayThamGia) ? new Date(st.ngayThamGia || st.NgayThamGia).toLocaleDateString('vi-VN') : "-"}</td>
+                                                        <td>
+                                                            <button 
+                                                                className="btn btn-sm btn-outline-danger border-0 rounded-pill"
+                                                                onClick={() => handleRemoveStudent(st.maHocSinh || st.MaHocSinh)}
+                                                                title="Xóa khỏi lớp"
+                                                            >
+                                                                <i className="bi bi-person-x-fill"></i>
+                                                            </button>
+                                                        </td>
+                                                    </tr>
+                                                ))}
+                                            </tbody>
+                                        </table>
+                                    </div>
+                                )}
+                            </div>
+                            <div className="modal-footer border-0">
+                                <button 
+                                    type="button" 
+                                    className="btn btn-secondary px-4 rounded-pill" 
+                                    onClick={() => setShowModal(false)}
+                                >
+                                    Đóng
+                                </button>
+                                <button 
+                                    type="button" 
+                                    className="btn btn-primary px-4 rounded-pill"
+                                    onClick={() => {
+                                        setShowModal(false);
+                                        navigate("/admin/classes/assign-students", {
+                                            state: {
+                                                classId: selectedClass.maLop,
+                                                className: selectedClass.maLopHienThi,
+                                            },
+                                        });
+                                    }}
+                                >
+                                    <i className="bi bi-person-plus me-1"></i>
+                                    Thêm học viên
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            )}
         </div>
     );
 };

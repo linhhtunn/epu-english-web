@@ -24,6 +24,7 @@ export default function AdminCreateClass() {
   const [teachers, setTeachers] = useState([]);
 
   useEffect(() => {
+    document.title = isEditMode ? "Cập nhật lớp học | EPU English" : "Thêm lớp học | EPU English";
     const fetchData = async () => {
       try {
         const [courseData, userData] = await Promise.all([

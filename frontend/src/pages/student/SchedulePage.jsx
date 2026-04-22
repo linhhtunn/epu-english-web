@@ -57,6 +57,7 @@ const SchedulePage = () => {
     };
 
     useEffect(() => {
+        document.title = "Lịch học | EPU English";
         fetchSchedule();
     }, [viewDate, user?.profileId]);
 

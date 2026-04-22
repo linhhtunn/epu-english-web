@@ -7,7 +7,7 @@ import api from "../services/api";
 import anhNen1 from "../assets/avtLogin2.jpg";
 import anhNen2 from "../assets/avtLogin3.jpg";
 import anhNen3 from "../assets/anh3.jpg";
-import logoApollo from "../assets/anh4.png";
+import logoBrand from "../assets/anh4.png";
 import avtLogin from "../assets/avtLogin.jpg";
 const Login = () => {
     const [email, setEmail] = useState("");
@@ -16,6 +16,10 @@ const Login = () => {
     const [loading, setLoading] = useState(false);
     const { login } = useAuth();
     const navigate = useNavigate();
+
+    React.useEffect(() => {
+        document.title = "Đăng nhập | EPU English";
+    }, []);
 
     const bannerImages = [avtLogin, anhNen1, anhNen2, anhNen3];
 
@@ -143,8 +147,8 @@ const Login = () => {
                             }}
                         >
                             <img
-                                src={logoApollo}
-                                alt="Apollo Logo"
+                                src={logoBrand}
+                                alt="EPU English Logo"
                                 style={{
                                     width: "100%",
                                     height: "auto",
@@ -164,7 +168,7 @@ const Login = () => {
                         }}
                     >
                         <h2 className="fw-bold text-dark mb-1 text-center">
-                            Sign in to Active
+                            Sign in to EPU English
                         </h2>
                         <p className="text-muted small mb-4 text-center">
                             Enter your details below

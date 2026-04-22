@@ -35,6 +35,18 @@ export const classService = {
 
     assignStudent: async (classId, studentId) => {
         const response = await api.post(`/class/${classId}/assignStudent/${studentId}`);
+        classesCache = null;
+        return response.data;
+    },
+
+    getStudentsInClass: async (id) => {
+        const response = await api.get(`/class/${id}/students`);
+        return response.data;
+    },
+
+    removeStudent: async (classId, studentId) => {
+        const response = await api.delete(`/class/${classId}/removeStudent/${studentId}`);
+        classesCache = null;
         return response.data;
     }
 };

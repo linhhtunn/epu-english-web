@@ -20,7 +20,7 @@
 
 .custom-nav-btn:hover {
     background: rgba(255, 255, 255, 0.3);
-    color: #ef7d00; /* Đổi sang màu cam Apollo khi di chuột */
+    color: #ef7d00; /* Đổi sang màu cam EPU khi di chuột */
     transform: translateY(-50%) scale(1.1);
 }
 

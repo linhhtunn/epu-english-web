@@ -9,6 +9,7 @@ const TeacherDashboard = () => {
     const [dashboardData, setDashboardData] = useState(null);
 
     useEffect(() => {
+        document.title = "Bảng điều khiển Giáo viên | EPU English";
         const fetchDashboard = async () => {
             try {
                 setLoading(true);

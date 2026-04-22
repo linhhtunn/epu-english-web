@@ -10,6 +10,7 @@ const ParentDashboard = () => {
     const [error, setError] = useState(null);
 
     useEffect(() => {
+        document.title = "Bảng điều khiển Phụ huynh | EPU English";
         const fetchData = async () => {
             try {
                 setLoading(true);
