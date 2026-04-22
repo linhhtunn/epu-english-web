@@ -1,4 +1,4 @@
-﻿import api from './api';
+import api from './api';
 
 let classesCache = null;
 
@@ -38,4 +38,3 @@ export const classService = {
         return response.data;
     }
 };
-

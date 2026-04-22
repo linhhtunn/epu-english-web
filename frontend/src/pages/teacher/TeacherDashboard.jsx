@@ -1,19 +1,40 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useAuth } from '../../context/AuthContext';
+import { teacherService } from '../../services/teacherService';
 
 const TeacherDashboard = () => {
     const { user } = useAuth();
+    const [loading, setLoading] = useState(true);
+    const [error, setError] = useState(null);
+    const [dashboardData, setDashboardData] = useState(null);
 
-    const [stats] = useState([
-        { label: 'Lớp đang dạy', value: '03', bg: 'linear-gradient(135deg, #005197 0%, #0081f1 100%)', icon: 'bi-door-open' },
-        { label: 'Số lượng học sinh', value: '100', bg: 'linear-gradient(135deg, #d63384 0%, #f8bbd0 100%)', icon: 'bi-people' },
-        { label: 'Giờ dạy tháng này', value: '42h', bg: 'linear-gradient(135deg, #198754 0%, #20c997 100%)', icon: 'bi-clock-history' },
-        { label: 'Yêu cầu hỗ trợ', value: '02', bg: 'linear-gradient(135deg, #f39c12 0%, #fbc531 100%)', icon: 'bi-chat-dots' }
-    ]);
+    useEffect(() => {
+        const fetchDashboard = async () => {
+            try {
+                setLoading(true);
+                const data = await teacherService.getDashboard();
+                setDashboardData(data);
+            } catch (err) {
+                console.error("Lỗi khi tải dashboard giáo viên", err);
+                setError("Không thể tải dữ liệu.");
+            } finally {
+                setLoading(false);
+            }
+        };
+        fetchDashboard();
+    }, []);
 
-    const todayClasses = [
-        { id: 1, code: 'HNI-PRI4-0065', subject: 'English for Kids', time: '17:30 - 19:00', room: 'P.302', type: 'Chính khóa' },
-        { id: 2, code: 'HNI-IELTS-102', subject: 'Academic Writing', time: '19:30 - 21:00', room: 'P.405', type: 'Bổ trợ' }
+    if (loading) return <div className="p-5 text-center">Loading...</div>;
+    if (error) return <div className="p-5 text-center text-danger">{error}</div>;
+
+    const rawStats = dashboardData?.stats || { totalClasses: 0, totalStudents: 0, teachingHours: 0, supportRequests: 0 };
+    const todayClasses = dashboardData?.todayClasses || [];
+
+    const stats = [
+        { label: 'Lớp đang dạy', value: String(rawStats.totalClasses).padStart(2, '0'), bg: 'linear-gradient(135deg, #005197 0%, #0081f1 100%)', icon: 'bi-door-open' },
+        { label: 'Số lượng học sinh', value: String(rawStats.totalStudents), bg: 'linear-gradient(135deg, #d63384 0%, #f8bbd0 100%)', icon: 'bi-people' },
+        { label: 'Giờ dạy tháng này', value: `${rawStats.teachingHours}h`, bg: 'linear-gradient(135deg, #198754 0%, #20c997 100%)', icon: 'bi-clock-history' },
+        { label: 'Yêu cầu hỗ trợ', value: String(rawStats.supportRequests).padStart(2, '0'), bg: 'linear-gradient(135deg, #f39c12 0%, #fbc531 100%)', icon: 'bi-chat-dots' }
     ];
 
     return (
@@ -23,16 +44,14 @@ const TeacherDashboard = () => {
             <div className="d-flex justify-content-between align-items-center mb-4">
                 <div>
                     <h2 className="fw-bold text-dark mb-1">
-                        Xin chào, <span className="text-primary">{user?.hoTen || 'Thầy/Cô'}</span>
+                        Xin chào, <span className="text-primary">{user?.fullName || 'Thầy/Cô'}</span>
                     </h2>
                     <p className="text-muted mb-0 small">
                         Bạn có <span className="fw-bold text-primary">{todayClasses.length} lớp dạy</span> chiều tối nay.
                     </p>
                 </div>
                 
-                {/* NHÓM NÚT ĐÃ ĐỔI VỊ TRÍ */}
                 <div className="d-flex align-items-center gap-3">
-                    {/* 1. School Tag: Học kỳ (Đã chuyển sang bên trái cụm nút) */}
                     <div className="bg-white p-2 px-3 rounded-4 shadow-sm border d-flex align-items-center d-none d-md-flex">
                         <div className="bg-primary-subtle p-2 rounded-3 me-3">
                             <i className="bi bi-calendar-check text-primary"></i>
@@ -43,7 +62,6 @@ const TeacherDashboard = () => {
                         </div>
                     </div>
 
-                    {/* 2. Nút thông báo hình chuông (Đã chuyển sang bên phải ngoài cùng) */}
                     <div className="position-relative cursor-pointer hover-up bg-white shadow-sm border rounded-circle d-flex align-items-center justify-content-center" 
                          style={{ width: '45px', height: '45px', cursor: 'pointer' }}>
                         <i className="bi bi-bell-fill text-secondary fs-5"></i>
@@ -79,7 +97,7 @@ const TeacherDashboard = () => {
                     <div className="card border-0 shadow-sm rounded-5 p-4 bg-white h-100">
                         <div className="d-flex justify-content-between align-items-center mb-4 px-2">
                             <h5 className="fw-bold mb-0 text-dark">Lịch dạy hôm nay</h5>
-                            <span className="badge bg-primary-subtle text-primary border border-primary-subtle rounded-pill px-3 py-2 small fw-bold">Thứ Năm, 26/02</span>
+                            <span className="badge bg-primary-subtle text-primary border border-primary-subtle rounded-pill px-3 py-2 small fw-bold">Hiện tại</span>
                         </div>
                         <div className="table-responsive">
                             <table className="table table-hover align-middle">
@@ -93,7 +111,11 @@ const TeacherDashboard = () => {
                                     </tr>
                                 </thead>
                                 <tbody className="fw-medium text-dark">
-                                    {todayClasses.map(cls => (
+                                    {todayClasses.length === 0 ? (
+                                        <tr>
+                                            <td colSpan="5" className="text-center py-4 text-muted">Không có lịch dạy hôm nay.</td>
+                                        </tr>
+                                    ) : todayClasses.map(cls => (
                                         <tr key={cls.id} className="transition-all">
                                             <td className="ps-4 ps-lg-5 py-3">
                                                 <div className="fw-bold text-dark">{cls.code}</div>
@@ -129,7 +151,7 @@ const TeacherDashboard = () => {
                         <div className="mb-3 d-flex align-items-start">
                             <div className="bg-success rounded-circle p-1 me-2 mt-1"></div>
                             <p className="small mb-0 opacity-75">
-                                Chấm bài Writing lớp <span className="text-info fw-bold">HNI-PRI4-0065</span> trước 22:00.
+                                Điểm danh lớp <span className="text-info fw-bold">HNI-PRI4-0065</span>.
                             </p>
                         </div>
                         <div className="d-flex align-items-start">

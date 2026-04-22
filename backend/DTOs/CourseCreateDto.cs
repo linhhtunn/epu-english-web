@@ -1,4 +1,4 @@
-﻿using System.ComponentModel.DataAnnotations;
+using System.ComponentModel.DataAnnotations;
 
 namespace backend.DTOs
 {
@@ -14,4 +14,3 @@ namespace backend.DTOs
         public string? MoTa { get; set; }
     }
 }
-

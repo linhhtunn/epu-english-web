@@ -1,4 +1,4 @@
-﻿import React, { useState, useEffect } from "react";
+import React, { useState, useEffect } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { userService } from "../../services/userService";
 
@@ -341,4 +341,3 @@ const AdminCreateUser = () => {
 };
 
 export default AdminCreateUser;
-

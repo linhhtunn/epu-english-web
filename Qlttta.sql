@@ -1,14 +1,12 @@
-﻿-- ===========
--- ===========
 /* =============================================================
-   0. THIáº¾T Láº¬P CHUNG
+   0. THIẾT LẬP CHUNG
    DROP DATABASE IF EXISTS QuanLyTrungTam;
 ============================================================= */
 CREATE DATABASE IF NOT EXISTS QuanLyTrungTam CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
 USE QuanLyTrungTam;
 
 /* =============================================================
-   1. Há»† THá»NG DANH Má»¤C & TÃ€I KHOáº¢N
+   1. HỆ THỐNG DANH MỤC & TÀI KHOẢN
 ============================================================= */
 
 CREATE TABLE vaiTro (
@@ -31,7 +29,7 @@ CREATE TABLE loaiBaiTap (
 );
 
 /* =============================================================
-   1.x. DANH Má»¤C Há»ŒC THUáº¬T
+   1.x. DANH MỤC HỌC THUẬT
 ============================================================= */
 
 CREATE TABLE sachGiaoTrinh (
@@ -70,7 +68,7 @@ CREATE TABLE nguoiDung (
 CREATE INDEX idxNguoiDungVaiTro ON nguoiDung(maVaiTro);
 
 /* =============================================================
-   2. Há»’ SÆ  CHI TIáº¾T (ACTOR PROFILES)
+   2. HỒ SƠ CHI TIẾT (ACTOR PROFILES)
 ============================================================= */
 
 CREATE TABLE quanTriVien (
@@ -109,7 +107,7 @@ CREATE TABLE hocSinh (
 );
 
 /* =============================================================
-   3. Lá»šP Há»ŒC & NGÃ‚N HÃ€NG Äá»€
+   3. LỚP HỌC & NGÂN HÀNG ĐỀ
 ============================================================= */
 
 CREATE TABLE lopHoc (
@@ -166,7 +164,7 @@ CREATE TABLE hocSinhLopHoc (
 );
 
 /* =============================================================
-   3. TIáº¾P: BUá»”I Há»ŒC & ÄIá»‚M DANH
+   3. TIẾP: BUỔI HỌC & ĐIỂM DANH
 ============================================================= */
 
 CREATE TABLE buoiHoc (
@@ -193,7 +191,7 @@ CREATE TABLE diemDanh (
 );
 
 /* =============================================================
-   4. BÃO CÃO & BÃ€I Táº¬P
+   4. BÁO CÁO & BÀI TẬP
 ============================================================= */
 
 CREATE TABLE baoCaoBaiHoc (
@@ -257,7 +255,7 @@ CREATE TABLE nhatKyApos (
 );
 
 /* =============================================================
-   6. THÃ”NG BÃO & Lá»ŠCH TRÃŒNH
+   6. THÔNG BÁO & LỊCH TRÌNH
 ============================================================= */
 
 CREATE TABLE thongBao (
@@ -387,21 +385,21 @@ CREATE TABLE thongKeHocTap (
 );
 USE QuanLyTrungTam;
 
--- 1. Táº¡o vai trÃ² Há»c Sinh (MÃ£ vai trÃ² thÆ°á»ng gÃ¡n lÃ  4)
+-- 1. Tạo vai trò Học Sinh (Mã vai trò thường gán là 4)
 INSERT IGNORE INTO vaiTro (maVaiTro, tenVaiTro) VALUES (4, 'Hoc_Sinh');
 
--- 2. Táº¡o tÃ i khoáº£n Ä‘Äƒng nháº­p (Pass: 123456)
+-- 2. Tạo tài khoản đăng nhập (Pass: 123456)
 INSERT INTO nguoiDung (tenDangNhap, email, matKhau, salt, hoTen, maVaiTro, trangThai)
 VALUES (
     'hs01', 
     'hs01@apollo.edu.vn', 
     'nhan1234@', 
     'salt123', 
-    'Nguyá»…n VÄƒn Há»c', 
+    'Nguyễn Văn Học', 
     4, 
     'Hoat_Dong'
 );
 
--- 3. ÄÆ°a tÃ i khoáº£n nÃ y vÃ o báº£ng Há»“ sÆ¡ Há»c Sinh (Cho sáºµn 150 Ä‘iá»ƒm Apos)
+-- 3. Đưa tài khoản này vào bảng Hồ sơ Học Sinh (Cho sẵn 150 điểm Apos)
 SET @idNguoiDung = LAST_INSERT_ID();
 INSERT INTO hocSinh (maNguoiDung, diemTongApos) VALUES (@idNguoiDung, 150);

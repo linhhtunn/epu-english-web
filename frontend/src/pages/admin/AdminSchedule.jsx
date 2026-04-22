@@ -1,11 +1,14 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
+import { adminService } from '../../services/adminService';
 
 const AdminSchedule = () => {
-    // 1. STATE & MOCK DATA (Mô phỏng dữ liệu từ DB)
-    const [currentDate, setCurrentDate] = useState(new Date("2026-02-26"));
-    const [viewFilter, setViewFilter] = useState('all'); // all, room, teacher
+    const [currentDate, setCurrentDate] = useState(new Date());
+    const [viewFilter, setViewFilter] = useState('all'); 
+    const [loading, setLoading] = useState(true);
+    const [scheduledClasses, setScheduledClasses] = useState([]);
+    const [rescheduleRequests, setRescheduleRequests] = useState([]);
+    const [weekDays, setWeekDays] = useState([]);
 
-    // Danh sách Tiết học (Ca học)
     const timeSlots = [
         { id: 1, name: 'Ca 1', time: '07:30 - 09:30' },
         { id: 2, name: 'Ca 2', time: '09:45 - 11:45' },
@@ -15,31 +18,61 @@ const AdminSchedule = () => {
         { id: 6, name: 'Ca 6', time: '20:15 - 22:15' }
     ];
 
-    // Danh sách các ngày trong tuần (Hiển thị tĩnh cho UI demo)
-    const weekDays = ['Thứ 2 (23/02)', 'Thứ 3 (24/02)', 'Thứ 4 (25/02)', 'Thứ 5 (26/02)', 'Thứ 6 (27/02)', 'Thứ 7 (28/02)', 'CN (01/03)'];
+    const formatDateForAPI = (date) => {
+        const year = date.getFullYear();
+        const month = String(date.getMonth() + 1).padStart(2, "0");
+        const day = String(date.getDate()).padStart(2, "0");
+        return `${year}-${month}-${day}`;
+    };
 
-    // Dữ liệu Buổi học (Đã xếp lịch)
-    const scheduledClasses = [
-        { id: 1, classCode: 'HNI-PRI4-0065', teacher: 'Lan Anh', room: 'P.302', dayIdx: 0, slotId: 5, isConflict: false },
-        { id: 2, classCode: 'IELTS-102', teacher: 'Steven Dang', room: 'P.405', dayIdx: 1, slotId: 6, isConflict: false },
-        { id: 3, classCode: 'TOEIC-500', teacher: 'Thu Hà', room: 'P.101', dayIdx: 3, slotId: 5, isConflict: true, conflictReason: 'Trùng lịch Giảng viên (Đang dạy IELTS-103)' },
-        { id: 4, classCode: 'KIDS-STARTER', teacher: 'Minh Tuấn', room: 'P.202', dayIdx: 5, slotId: 2, isConflict: false }
-    ];
+    const getWeekRange = (date) => {
+        const start = new Date(date);
+        const day = start.getDay();
+        const diff = start.getDate() - day + (day === 0 ? -6 : 1);
+        const monday = new Date(start.setDate(diff));
+        
+        const generatedWeekDays = [];
+        const tempDate = new Date(monday);
+        const dayNames = ['Thứ 2', 'Thứ 3', 'Thứ 4', 'Thứ 5', 'Thứ 6', 'Thứ 7', 'CN'];
+        
+        for (let i = 0; i < 7; i++) {
+            generatedWeekDays.push(`${dayNames[i]} (${String(tempDate.getDate()).padStart(2, '0')}/${String(tempDate.getMonth()+1).padStart(2, '0')})`);
+            tempDate.setDate(tempDate.getDate() + 1);
+        }
+        setWeekDays(generatedWeekDays);
 
-    // Dữ liệu Yêu cầu đổi lịch từ Giảng viên (YeuCauLichDay)
-    const rescheduleRequests = [
-        { id: 1, teacher: 'Lan Anh', classCode: 'HNI-PRI4-0065', oldDate: '26/02 - Ca 5', newDate: '27/02 - Ca 5', reason: 'Có việc gia đình đột xuất', status: 'pending' },
-        { id: 2, teacher: 'Steven Dang', classCode: 'IELTS-102', oldDate: '24/02 - Ca 6', newDate: '25/02 - Ca 6', reason: 'Trùng lịch họp chuyên môn', status: 'pending' }
-    ];
+        const sunday = new Date(monday);
+        sunday.setDate(monday.getDate() + 6);
+        return {
+            fromDate: formatDateForAPI(monday),
+            toDate: formatDateForAPI(sunday),
+        };
+    };
 
-    // 2. HÀM XỬ LÝ ĐIỀU HƯỚNG TUẦN
+    useEffect(() => {
+        const fetchSchedule = async () => {
+            try {
+                setLoading(true);
+                const { fromDate, toDate } = getWeekRange(currentDate);
+                const data = await adminService.getSchedule(fromDate, toDate);
+                setScheduledClasses(data.scheduledClasses || []);
+                setRescheduleRequests(data.rescheduleRequests || []);
+            } catch (err) {
+                console.error("Lỗi tải lịch admin:", err);
+            } finally {
+                setLoading(false);
+            }
+        };
+
+        fetchSchedule();
+    }, [currentDate]);
+
     const changeWeek = (amount) => {
         const newDate = new Date(currentDate);
         newDate.setDate(currentDate.getDate() + (amount * 7));
         setCurrentDate(newDate);
     };
 
-    // Hàm render ô lịch
     const renderTimeSlot = (dayIdx, slotId) => {
         const classInSlot = scheduledClasses.find(c => c.dayIdx === dayIdx && c.slotId === slotId);
         
@@ -61,8 +94,6 @@ const AdminSchedule = () => {
 
     return (
         <div className="p-4 animate__animated animate__fadeIn h-100 d-flex flex-column">
-            
-            {/* --- HEADER & ĐIỀU HƯỚNG --- */}
             <div className="d-flex justify-content-between align-items-center mb-4">
                 <div>
                     <h2 className="fw-bold text-dark mb-1 text-uppercase">Điều phối Lịch dạy & Học</h2>
@@ -70,7 +101,6 @@ const AdminSchedule = () => {
                 </div>
                 
                 <div className="d-flex gap-3 align-items-center">
-                    {/* Bộ lọc */}
                     <select className="form-select rounded-pill shadow-sm bg-light border-0 fw-medium" style={{ width: '200px' }} value={viewFilter} onChange={(e) => setViewFilter(e.target.value)}>
                         <option value="all">Tất cả lớp học</option>
                         <option value="room">Lọc theo Phòng học</option>
@@ -84,15 +114,13 @@ const AdminSchedule = () => {
             </div>
 
             <div className="row g-4 flex-grow-1">
-                {/* --- LƯỚI LỊCH (SCHEDULER GRID) --- */}
                 <div className="col-lg-9 d-flex flex-column">
                     <div className="card border-0 shadow-sm rounded-5 p-3 flex-grow-1 bg-white d-flex flex-column">
                         
-                        {/* Thanh chuyển tuần */}
                         <div className="d-flex justify-content-between align-items-center mb-3 px-2">
                             <h5 className="fw-bold mb-0 text-dark">Lịch trình hệ thống</h5>
                             <div className="bg-light border rounded-pill p-1 shadow-sm d-flex align-items-center">
-                                <button className="btn btn-primary rounded-pill px-4 fw-bold shadow-none" onClick={() => setCurrentDate(new Date("2026-02-26"))} style={{ fontSize: '14px', height: '36px' }}>
+                                <button className="btn btn-primary rounded-pill px-4 fw-bold shadow-none" onClick={() => setCurrentDate(new Date())} style={{ fontSize: '14px', height: '36px' }}>
                                     Hiện tại
                                 </button>
                                 <div className="d-flex align-items-center px-2 py-1">
@@ -107,41 +135,45 @@ const AdminSchedule = () => {
                             </div>
                         </div>
 
-                        {/* Bảng Lịch */}
                         <div className="table-responsive flex-grow-1 custom-scrollbar pe-2">
-                            <table className="table table-bordered mb-0 align-middle" style={{ minWidth: '900px', tableLayout: 'fixed' }}>
-                                <thead className="bg-light sticky-top" style={{ zIndex: 10 }}>
-                                    <tr className="text-center text-muted small text-uppercase">
-                                        <th style={{ width: '12%' }} className="border-0 bg-light py-3">Ca / Thời gian</th>
-                                        {weekDays.map((day, idx) => (
-                                            <th key={idx} style={{ width: '12.5%' }} className="border-0 bg-light py-3">{day}</th>
-                                        ))}
-                                    </tr>
-                                </thead>
-                                <tbody>
-                                    {timeSlots.map(slot => (
-                                        <tr key={slot.id}>
-                                            <td className="text-center bg-light border-end py-3">
-                                                <div className="fw-bold text-dark">{slot.name}</div>
-                                                <div className="text-muted" style={{ fontSize: '10px' }}>{slot.time}</div>
-                                            </td>
-                                            {weekDays.map((_, dayIdx) => (
-                                                <td key={dayIdx} className="p-1 align-top">
-                                                    {renderTimeSlot(dayIdx, slot.id)}
-                                                </td>
+                            {loading ? (
+                                <div className="d-flex justify-content-center align-items-center h-100 min-h-60px py-5">
+                                    <div className="spinner-border text-primary" role="status">
+                                        <span className="visually-hidden">Loading...</span>
+                                    </div>
+                                </div>
+                            ) : (
+                                <table className="table table-bordered mb-0 align-middle" style={{ minWidth: '900px', tableLayout: 'fixed' }}>
+                                    <thead className="bg-light sticky-top" style={{ zIndex: 10 }}>
+                                        <tr className="text-center text-muted small text-uppercase">
+                                            <th style={{ width: '12%' }} className="border-0 bg-light py-3">Ca / Thời gian</th>
+                                            {weekDays.map((day, idx) => (
+                                                <th key={idx} style={{ width: '12.5%' }} className="border-0 bg-light py-3">{day}</th>
                                             ))}
                                         </tr>
-                                    ))}
-                                </tbody>
-                            </table>
+                                    </thead>
+                                    <tbody>
+                                        {timeSlots.map(slot => (
+                                            <tr key={slot.id}>
+                                                <td className="text-center bg-light border-end py-3">
+                                                    <div className="fw-bold text-dark">{slot.name}</div>
+                                                    <div className="text-muted" style={{ fontSize: '10px' }}>{slot.time}</div>
+                                                </td>
+                                                {weekDays.map((_, dayIdx) => (
+                                                    <td key={dayIdx} className="p-1 align-top">
+                                                        {renderTimeSlot(dayIdx, slot.id)}
+                                                    </td>
+                                                ))}
+                                            </tr>
+                                        ))}
+                                    </tbody>
+                                </table>
+                            )}
                         </div>
                     </div>
                 </div>
 
-                {/* --- SIDEBAR: YÊU CẦU ĐỔI LỊCH & LỚP CHỜ --- */}
                 <div className="col-lg-3 d-flex flex-column gap-4">
-                    
-                    {/* Block Yêu cầu đổi lịch */}
                     <div className="card border-0 shadow-sm rounded-5 p-4 bg-white h-50 d-flex flex-column">
                         <div className="d-flex justify-content-between align-items-center mb-4">
                             <h6 className="fw-bold mb-0 text-dark"><i className="bi bi-arrow-left-right text-warning me-2"></i>Duyệt đổi lịch</h6>
@@ -149,7 +181,9 @@ const AdminSchedule = () => {
                         </div>
                         
                         <div className="overflow-y-auto custom-scrollbar pe-2 flex-grow-1">
-                            {rescheduleRequests.map(req => (
+                            {rescheduleRequests.length === 0 ? (
+                                <div className="text-center text-muted small py-4">Không có yêu cầu đổi lịch.</div>
+                            ) : rescheduleRequests.map(req => (
                                 <div key={req.id} className="bg-light rounded-4 p-3 mb-3 border border-light-subtle position-relative">
                                     <div className="fw-bold text-primary mb-1" style={{ fontSize: '13px' }}>{req.classCode}</div>
                                     <div className="small text-dark fw-medium mb-2"><i className="bi bi-person me-1"></i> GV: {req.teacher}</div>
@@ -171,7 +205,6 @@ const AdminSchedule = () => {
                         </div>
                     </div>
 
-                    {/* Block Thông tin Phòng học / Chú thích */}
                     <div className="card border-0 shadow-sm rounded-5 p-4 bg-dark text-white h-50">
                         <h6 className="fw-bold mb-4 text-warning"><i className="bi bi-info-circle-fill me-2"></i>Chú thích hệ thống</h6>
                         

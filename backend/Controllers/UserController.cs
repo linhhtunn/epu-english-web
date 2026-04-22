@@ -1,13 +1,14 @@
-﻿using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.AspNetCore.Authorization;
 using backend.Data;
 using backend.Models;
 using backend.DTOs;
-
 namespace backend.Controllers
 {
     [Route("api/[controller]")]
     [ApiController]
+    [Authorize(Roles = "Admin")]
     public class UserController : ControllerBase
     {
         private readonly AppDbContext _context;
@@ -23,7 +24,6 @@ namespace backend.Controllers
         {
             var users = await _context.NguoiDungs
                 .Include(u => u.MaVaiTroNavigation)
-                .Include(u => u.GiaoVien)
                 .Select(u => new
                 {
                     u.MaNguoiDung,
@@ -32,8 +32,7 @@ namespace backend.Controllers
                     u.HoTen,
                     u.TrangThai,
                     u.NgayTao,
-                    RoleName = u.MaVaiTroNavigation.TenVaiTro,
-                    TeacherId = u.GiaoVien != null ? u.GiaoVien.MaGiaoVien : (int?)null
+                    RoleName = u.MaVaiTroNavigation.TenVaiTro
                 })
                 .ToListAsync();
 
@@ -87,16 +86,15 @@ namespace backend.Controllers
             {
                 return BadRequest("Email đã tồn tại.");
             }
-            // Using plaintext password for demo as requested
-            // var salt = BCrypt.Net.BCrypt.GenerateSalt();
-            // var hashedPassword = BCrypt.Net.BCrypt.HashPassword(userDto.MatKhau, salt);
+            var generatedSalt = Guid.NewGuid().ToString("N");
+            var hashedPassword = BCrypt.Net.BCrypt.HashPassword(userDto.MatKhau);
 
             var newUser = new NguoiDung
             {
                 TenDangNhap = userDto.TenDangNhap,
                 Email = userDto.Email,
-                MatKhau = userDto.MatKhau,
-                Salt = "demo_salt",
+                MatKhau = hashedPassword,
+                Salt = generatedSalt,
                 HoTen = userDto.HoTen,
                 MaVaiTro = userDto.MaVaiTro,
                 AnhDaiDien = userDto.AnhDaiDien,
@@ -148,10 +146,8 @@ namespace backend.Controllers
             // Only update password if provided
             if (!string.IsNullOrEmpty(userDto.MatKhau))
             {
-                // Using plaintext password for demo
-                // var salt = BCrypt.Net.BCrypt.GenerateSalt();
-                user.MatKhau = userDto.MatKhau;
-                user.Salt = "demo_salt";
+                user.MatKhau = BCrypt.Net.BCrypt.HashPassword(userDto.MatKhau);
+                user.Salt = Guid.NewGuid().ToString("N");
             }
 
             // Note: Updating role profiles (e.g., changing from Student to Admin) is complex and usually requires deleting old profile and creating new one.
@@ -200,4 +196,3 @@ namespace backend.Controllers
         }
     }
 }
-

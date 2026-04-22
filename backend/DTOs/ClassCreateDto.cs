@@ -1,4 +1,4 @@
-﻿using System.ComponentModel.DataAnnotations;
+using System.ComponentModel.DataAnnotations;
 
 namespace backend.DTOs
 {
@@ -17,4 +17,3 @@ namespace backend.DTOs
         public string? LichHoc { get; set; }
     }
 }
-

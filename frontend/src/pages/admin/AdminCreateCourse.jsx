@@ -1,4 +1,4 @@
-﻿import { useState, useEffect } from "react";
+import { useState, useEffect } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { courseService } from "../../services/courseService";
 
@@ -248,4 +248,3 @@ export default function AdminCreateCourse() {
         </div>
     );
 }
-

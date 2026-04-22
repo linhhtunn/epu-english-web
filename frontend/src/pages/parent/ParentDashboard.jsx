@@ -1,37 +1,36 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
+import { parentService } from '../../services/parentService';
+import { useAuth } from '../../context/AuthContext';
 
 const ParentDashboard = () => {
-    const [children] = useState([
-        {
-            id: "HS00123",
-            tenCon: "Nguyễn Văn Học",
-            maHocSinh: "HS001",
-            lop: "HNI - PRI4 - 006",
-            khoaHoc: "Lộ trình Tiếng Anh IELTS 5.5+",
-            nhanXetMoiNhat: "An rất tích cực trong giờ học hôm nay, đã hoàn thành bài tập về nhà xuất sắc. Cần chú ý thêm phần phát âm âm đuôi.",
-            tiendo: { thamDu: 94, hoanThanhWB: 100, hoanThanhAAR: 75 },
-            hocPhi: "Đã thanh toán",
-            lichHoc: [
-                { thu: "Thứ 2", gio: "18:00 - 19:30", phong: "P.302", mon: "IELTS Reading" },
-                { thu: "Thứ 4", gio: "18:00 - 19:30", phong: "P.302", mon: "IELTS Speaking" },
-            ]
-        },
-        {
-            id: "HS00456",
-            tenCon: "Nguyễn Minh Anh",
-            maHocSinh: "HS00456",
-            lop: "HNI - KIND - 002",
-            khoaHoc: "English for Kindergarten",
-            nhanXetMoiNhat: "Minh Anh học từ vựng rất nhanh qua các trò chơi.",
-            tiendo: { thamDu: 88, hoanThanhWB: 90, hoanThanhAAR: 60 },
-            hocPhi: "Cần thanh toán",
-            lichHoc: [
-                { thu: "Thứ 3", gio: "17:30 - 19:00", phong: "P.101", mon: "Phonics" },
-            ]
-        }
-    ]);
+    const { user } = useAuth();
+    const [children, setChildren] = useState([]);
+    const [selectedChild, setSelectedChild] = useState(null);
+    const [loading, setLoading] = useState(true);
+    const [error, setError] = useState(null);
 
-    const [selectedChild, setSelectedChild] = useState(children[0]);
+    useEffect(() => {
+        const fetchData = async () => {
+            try {
+                setLoading(true);
+                const data = await parentService.getChildrenDashboard();
+                if (data && data.length > 0) {
+                    setChildren(data);
+                    setSelectedChild(data[0]);
+                }
+            } catch (err) {
+                setError('Không thể tải dữ liệu.');
+                console.error(err);
+            } finally {
+                setLoading(false);
+            }
+        };
+        fetchData();
+    }, []);
+
+    if (loading) return <div className="p-5 text-center">Loading...</div>;
+    if (error) return <div className="p-5 text-center text-danger">{error}</div>;
+    if (!selectedChild) return <div className="p-5 text-center text-muted">Không có thông tin học sinh.</div>;
 
     return (
         <div className="p-0 animate__animated animate__fadeIn" style={{ fontFamily: "'Montserrat', sans-serif" }}>
@@ -40,7 +39,7 @@ const ParentDashboard = () => {
             <div className="d-flex justify-content-between align-items-center mb-5 px-4 pt-4">
                 <div>
                     <h2 className="fw-bold mb-1" style={{ color: '#005197', letterSpacing: '-0.5px' }}>
-                        Xin chào, Phụ huynh Nguyễn Văn Hùng
+                        Xin chào, {user?.fullName || "Phụ huynh"}
                     </h2>
                     <p className="text-muted fw-500 mb-0">Theo dõi hành trình học tập của các con.</p>
                 </div>
@@ -65,9 +64,9 @@ const ParentDashboard = () => {
                     
                     <ul className="dropdown-menu dropdown-menu-end shadow border-0 rounded-4 mt-2 p-2">
                         {children.map(child => (
-                            <li key={child.id}>
+                            <li key={child.maHocSinh}>
                                 <button 
-                                    className={`dropdown-item rounded-3 py-2 mb-1 fw-bold ${selectedChild.id === child.id ? 'bg-primary-subtle text-primary' : ''}`}
+                                    className={`dropdown-item rounded-3 py-2 mb-1 fw-bold ${selectedChild.maHocSinh === child.maHocSinh ? 'bg-primary-subtle text-primary' : ''}`}
                                     onClick={() => setSelectedChild(child)}
                                 >
                                     {child.tenCon} <span className="small opacity-50 fw-normal">({child.maHocSinh})</span>
