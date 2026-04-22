@@ -8,6 +8,7 @@ const AdminCourses = () => {
     const [loading, setLoading] = useState(true);
 
     useEffect(() => {
+        document.title = "Quản lý khóa học | EPU English";
         fetchCourses();
     }, []);
 

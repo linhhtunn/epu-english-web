@@ -33,7 +33,8 @@ namespace backend.Controllers
                     c.LichHoc,
                     c.NgayTao,
                     CourseName = c.MaKhoaHocNavigation.TenKhoaHoc,
-                    TeacherName = c.MaGiaoVienNavigation != null ? c.MaGiaoVienNavigation.MaNguoiDungNavigation.HoTen : null
+                    TeacherName = c.MaGiaoVienNavigation != null ? c.MaGiaoVienNavigation.MaNguoiDungNavigation.HoTen : null,
+                    StudentCount = c.HocSinhLopHocs.Count()
                 })
                 .ToListAsync();
 
@@ -170,15 +171,51 @@ namespace backend.Controllers
                 MaLop = classId,
                 MaHocSinh = studentId,
                 TrangThai = "Dang_Hoc",
-                NgayThamGia = DateOnly.FromDateTime(DateTime.Today) // Hoặc DateOnly tùy cấu hình DB
+                NgayThamGia = DateOnly.FromDateTime(DateTime.Today)
             };
-
-            // Workaround cho EF Core có thể dùng DateOnly/DateTime. Cần check file gốc của HocSinhLopHoc.cs. Giả sử map bằng DateTime.
 
             _context.HocSinhLopHocs.Add(assignment);
             await _context.SaveChangesAsync();
 
             return Ok("Đã thêm học sinh vào lớp.");
+        }
+
+        [HttpGet("{id}/students")]
+        public async Task<ActionResult<IEnumerable<object>>> GetStudentsInClass(int id)
+        {
+            if (!ClassExists(id))
+                return NotFound("Lớp học không tồn tại.");
+
+            var students = await (from hslh in _context.HocSinhLopHocs
+                                 join hs in _context.HocSinhs on hslh.MaHocSinh equals hs.MaHocSinh
+                                 join u in _context.NguoiDungs on hs.MaNguoiDung equals u.MaNguoiDung
+                                 where hslh.MaLop == id
+                                 select new
+                                 {
+                                     MaHocSinh = hslh.MaHocSinh,
+                                     MaNguoiDung = hs.MaNguoiDung,
+                                     HoTen = u.HoTen,
+                                     Email = u.Email,
+                                     TrangThai = hslh.TrangThai,
+                                     NgayThamGia = hslh.NgayThamGia
+                                 }).ToListAsync();
+            return Ok(students);
+        }
+
+        // DELETE: api/Class/{classId}/removeStudent/{studentId}
+        [HttpDelete("{classId}/removeStudent/{studentId}")]
+        public async Task<IActionResult> RemoveStudent(int classId, int studentId)
+        {
+            var assignment = await _context.HocSinhLopHocs
+                .FirstOrDefaultAsync(hslh => hslh.MaLop == classId && hslh.MaHocSinh == studentId);
+
+            if (assignment == null)
+                return NotFound("Học sinh không có trong lớp này.");
+
+            _context.HocSinhLopHocs.Remove(assignment);
+            await _context.SaveChangesAsync();
+
+            return Ok("Đã xóa học sinh khỏi lớp.");
         }
 
         private bool ClassExists(int id)

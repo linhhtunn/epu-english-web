@@ -8,6 +8,7 @@ const AdminDashboard = () => {
     const [loading, setLoading] = useState(true);
 
     useEffect(() => {
+        document.title = "Bảng điều khiển | EPU English";
         const fetchDashboard = async () => {
             try {
                 setLoading(true);

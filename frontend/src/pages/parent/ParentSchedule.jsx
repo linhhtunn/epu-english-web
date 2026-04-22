@@ -30,6 +30,7 @@ const ParentSchedule = () => {
     };
 
     useEffect(() => {
+        document.title = "Lịch học của con | EPU English";
         const fetchChildren = async () => {
             try {
                 const data = await parentService.getChildrenDashboard();

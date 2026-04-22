@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import AttendanceModal from "./AttendanceModal";
 
 /**
@@ -11,6 +11,10 @@ import AttendanceModal from "./AttendanceModal";
 function TeacherAttendance() {
   const [activeTab, setActiveTab] = useState("can_diem_danh");
   const [selectedClass, setSelectedClass] = useState(null);
+
+  useEffect(() => {
+    document.title = "Điểm danh | EPU English";
+  }, []);
 
   // Dữ liệu mẫu có kèm danh sách học sinh
   const [classes, setClasses] = useState([

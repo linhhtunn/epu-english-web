@@ -47,6 +47,7 @@ const StudentReports = () => {
     };
 
     useEffect(() => {
+        document.title = "Báo cáo học tập | EPU English";
         fetchReports();
     }, [user?.profileId]);
 

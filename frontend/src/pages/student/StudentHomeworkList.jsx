@@ -45,6 +45,7 @@ const StudentHomeworkList = () => {
     };
 
     useEffect(() => {
+        document.title = "Bài tập & Bài thi | EPU English";
         fetchHomeworks();
     }, [user?.profileId]);
 

@@ -85,6 +85,7 @@ const AdminMessages = () => {
     };
 
     useEffect(() => {
+        document.title = "Tin nhắn | EPU English";
         if (rightView === 'chat') scrollToBottom();
     }, [activeChat, messages, rightView, attachments]);
 

@@ -23,6 +23,7 @@ const StudentNotifications = () => {
     };
 
     useEffect(() => {
+        document.title = "Thông báo | EPU English";
         loadNotifications();
     }, []);
 

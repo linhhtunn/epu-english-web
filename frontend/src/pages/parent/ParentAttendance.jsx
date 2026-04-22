@@ -11,6 +11,7 @@ const ParentAttendance = () => {
 
     // Load list of children first
     useEffect(() => {
+        document.title = "Điểm danh của con | EPU English";
         const fetchChildren = async () => {
             try {
                 setLoading(true);

@@ -53,6 +53,7 @@ const StudentSelfStudy = () => {
     };
 
     useEffect(() => {
+        document.title = "Học chủ động | EPU English";
         fetchData();
     }, [user?.profileId]);
 

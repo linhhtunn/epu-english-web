@@ -22,6 +22,7 @@ const AdminCreateUser = () => {
     const [error, setError] = useState(null);
 
     useEffect(() => {
+        document.title = isEditMode ? "Cập nhật người dùng | EPU English" : "Thêm người dùng | EPU English";
         if (isEditMode) {
             setLoading(true);
             userService

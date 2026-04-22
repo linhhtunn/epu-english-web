@@ -8,6 +8,7 @@ const AdminUsers = () => {
     const [loading, setLoading] = useState(true);
 
     useEffect(() => {
+        document.title = "Quản lý người dùng | EPU English";
         fetchUsers();
     }, []);
 

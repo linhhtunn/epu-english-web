@@ -30,6 +30,7 @@ const TeacherSchedule = () => {
     };
 
     useEffect(() => {
+        document.title = "Lịch dạy | EPU English";
         const fetchSchedule = async () => {
             setLoading(true);
             try {

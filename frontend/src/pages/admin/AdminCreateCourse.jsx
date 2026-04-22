@@ -18,6 +18,7 @@ export default function AdminCreateCourse() {
     });
 
     useEffect(() => {
+        document.title = isEditMode ? "Cập nhật khóa học | EPU English" : "Thêm khóa học | EPU English";
         if (isEditMode) {
             setLoading(true);
             courseService
