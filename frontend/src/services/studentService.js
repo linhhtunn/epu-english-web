@@ -21,6 +21,13 @@ export const studentService = {
         return response.data;
     },
 
+    getHomeworkDetail: async (studentId, homeworkId) => {
+        const response = await api.get(
+            `/student/${studentId}/homeworks/${homeworkId}`,
+        );
+        return response.data;
+    },
+
     getReports: async (studentId) => {
         const response = await api.get(`/student/${studentId}/reports`);
         return response.data;
@@ -34,6 +41,14 @@ export const studentService = {
     markNotificationAsRead: async (notificationId) => {
         const response = await api.put(
             `/student/notifications/${notificationId}/read`,
+        );
+        return response.data;
+    },
+
+    submitHomework: async (studentId, homeworkId, data) => {
+        const response = await api.post(
+            `/student/${studentId}/homeworks/${homeworkId}/submit`,
+            data,
         );
         return response.data;
     },

@@ -1,9 +1,11 @@
 import React, { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
 import { teacherService } from '../../services/teacherService';
 
 const TeacherDashboard = () => {
     const { user } = useAuth();
+    const navigate = useNavigate();
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState(null);
     const [dashboardData, setDashboardData] = useState(null);
@@ -131,9 +133,15 @@ const TeacherDashboard = () => {
                                                 <span className="badge bg-light text-dark border rounded-pill px-3 py-2 fw-normal">{cls.room}</span>
                                             </td>
                                             <td className="text-end pe-4 pe-lg-5">
-                                                <button className="btn btn-primary rounded-pill btn-sm px-3 shadow-sm hover-up fw-bold" style={{fontSize: '12px'}}>
-                                                    <i className="bi bi-person-check me-1"></i> Điểm danh
-                                                </button>
+                                                {cls.status === 'done' ? (
+                                                    <button className="btn btn-secondary rounded-pill btn-sm px-3 fw-bold disabled" style={{fontSize: '12px', opacity: 0.7}}>
+                                                        <i className="bi bi-check-circle-fill me-1"></i> Đã điểm danh
+                                                    </button>
+                                                ) : (
+                                                    <button className="btn btn-primary rounded-pill btn-sm px-3 shadow-sm hover-up fw-bold" style={{fontSize: '12px'}} onClick={() => navigate('/teacher/attendance')}>
+                                                        <i className="bi bi-person-check me-1"></i> Điểm danh
+                                                    </button>
+                                                )}
                                             </td>
                                         </tr>
                                     ))}

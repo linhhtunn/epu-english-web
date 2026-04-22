@@ -1,6 +1,7 @@
 using System.IdentityModel.Tokens.Jwt;
 using System.Security.Claims;
 using backend.Data;
+using backend.Models;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
@@ -284,6 +285,91 @@ public class StudentController : ControllerBase
         return Ok(mapped);
     }
 
+    [HttpGet("{studentId}/homeworks/{homeworkId}")]
+    public async Task<IActionResult> GetHomeworkDetail(int studentId, int homeworkId)
+    {
+        if (!CanAccessStudent(studentId))
+        {
+            return Forbid();
+        }
+
+        var classIds = await _context.HocSinhLopHocs
+            .Where(h => h.MaHocSinh == studentId)
+            .Select(h => h.MaLop)
+            .Distinct()
+            .ToListAsync();
+
+        var now = DateTime.UtcNow;
+
+        var homework = await _context.BaiTapVeNhas
+            .Where(b => b.MaBaiTap == homeworkId && classIds.Contains(b.MaLop))
+            .Select(b => new
+            {
+                b.MaBaiTap,
+                title = b.MaBaiTapGocNavigation.TieuDe,
+                description = b.MaBaiTapGocNavigation.NoiDung,
+                homeworkLink = b.Link ?? b.MaBaiTapGocNavigation.Link,
+                classCode = b.MaLopNavigation.MaLopHienThi,
+                courseName = b.MaLopNavigation.MaKhoaHocNavigation.TenKhoaHoc,
+                assignedAt = b.NgayGiao,
+                dueAt = b.HanNop,
+                rewardPoints = b.ThuongApos,
+                submitType = b.KieuNop,
+                difficulty = b.MaBaiTapGocNavigation.DoKho,
+                duration = b.MaBaiTapGocNavigation.ThoiGianLamBaiPhut,
+                skillType = b.MaBaiTapGocNavigation.LoaiHocThuat,
+                submission = b.BaiNopHocSinhs
+                    .Where(s => s.MaHocSinh == studentId)
+                    .Select(s => new
+                    {
+                        s.MaBaiNop,
+                        s.NgayNop,
+                        s.DiemSo,
+                        s.TrangThai,
+                        s.LoiPheGiaoVien,
+                        s.DuongDanBaiLam
+                    })
+                    .FirstOrDefault()
+            })
+            .FirstOrDefaultAsync();
+
+        if (homework == null)
+        {
+            return NotFound(new { message = "Không tìm thấy bài tập." });
+        }
+
+        string computedStatus;
+        if (homework.submission != null)
+        {
+            computedStatus = homework.submission.TrangThai == "Da_Cham" ? "Da_Cham"
+                : homework.submission.TrangThai == "Can_Lam_Lai" ? "Can_Lam_Lai"
+                : "Da_Nop";
+        }
+        else
+        {
+            computedStatus = homework.dueAt < now ? "Qua_Han" : "Cho_Nop";
+        }
+
+        return Ok(new
+        {
+            homework.MaBaiTap,
+            homework.title,
+            homework.description,
+            homework.homeworkLink,
+            homework.classCode,
+            homework.courseName,
+            homework.assignedAt,
+            homework.dueAt,
+            homework.rewardPoints,
+            homework.submitType,
+            homework.difficulty,
+            homework.duration,
+            homework.skillType,
+            status = computedStatus,
+            homework.submission
+        });
+    }
+
     [HttpGet("{studentId}/reports")]
     public async Task<IActionResult> GetReports(int studentId)
     {
@@ -365,6 +451,57 @@ public class StudentController : ControllerBase
             examResults,
             aposHistory
         });
+    }
+
+    [HttpPost("{studentId}/homeworks/{homeworkId}/submit")]
+    public async Task<IActionResult> SubmitHomework(int studentId, int homeworkId, [FromBody] SubmitRequest request)
+    {
+        if (!CanAccessStudent(studentId))
+        {
+            return Forbid();
+        }
+
+        var homework = await _context.BaiTapVeNhas
+            .FirstOrDefaultAsync(b => b.MaBaiTap == homeworkId);
+
+        if (homework == null)
+        {
+            return NotFound(new { message = "Không tìm thấy bài tập." });
+        }
+
+        // Optional: Check if deadline passed
+        // if (homework.HanNop < DateTime.UtcNow) return BadRequest(new { message = "Hạn nộp bài đã kết thúc." });
+
+        var existingSubmission = await _context.BaiNopHocSinhs
+            .FirstOrDefaultAsync(s => s.MaHocSinh == studentId && s.MaBaiTap == homeworkId);
+
+        if (existingSubmission != null)
+        {
+            existingSubmission.NgayNop = DateTime.UtcNow;
+            existingSubmission.DuongDanBaiLam = request.SubmissionLink;
+            existingSubmission.TrangThai = "Cho_Cham";
+        }
+        else
+        {
+            var submission = new BaiNopHocSinh
+            {
+                MaHocSinh = studentId,
+                MaBaiTap = homeworkId,
+                NgayNop = DateTime.UtcNow,
+                DuongDanBaiLam = request.SubmissionLink,
+                TrangThai = "Cho_Cham"
+            };
+            _context.BaiNopHocSinhs.Add(submission);
+        }
+
+        await _context.SaveChangesAsync();
+
+        return Ok(new { message = "Nộp bài thành công." });
+    }
+
+    public class SubmitRequest
+    {
+        public string SubmissionLink { get; set; } = null!;
     }
 
     [HttpGet("notifications")]

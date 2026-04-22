@@ -130,7 +130,7 @@ const Sidebar = () => {
                             </NavLink>
                         </li>
                         <li className="nav-item">
-                            <NavLink to="/teacher/exams" className={getNavLinkClass}>
+                            <NavLink to="/teacher/homework-assign" className={getNavLinkClass}>
                                 <i className="bi bi-file-earmark-text me-3 fs-5"></i> 
                                 <span style={{ fontSize: '14px' }}>Quản lý bài tập - Đề thi</span>
                             </NavLink>
