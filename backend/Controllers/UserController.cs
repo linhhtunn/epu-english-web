@@ -24,6 +24,7 @@ namespace backend.Controllers
         {
             var users = await _context.NguoiDungs
                 .Include(u => u.MaVaiTroNavigation)
+                .Include(u => u.GiaoVien)
                 .Select(u => new
                 {
                     u.MaNguoiDung,
@@ -32,7 +33,8 @@ namespace backend.Controllers
                     u.HoTen,
                     u.TrangThai,
                     u.NgayTao,
-                    RoleName = u.MaVaiTroNavigation.TenVaiTro
+                    RoleName = u.MaVaiTroNavigation.TenVaiTro,
+                    MaGiaoVien = u.GiaoVien != null ? u.GiaoVien.MaGiaoVien : (int?)null
                 })
                 .ToListAsync();
 

@@ -3,6 +3,7 @@ USE QuanLyTrungTam;
 SET FOREIGN_KEY_CHECKS = 0;
 
 TRUNCATE TABLE nguoiNhanThongBao;
+TRUNCATE TABLE yeuCauDoiLich;
 TRUNCATE TABLE nhanXetBaiLam;
 TRUNCATE TABLE ketQuaKiemTra;
 TRUNCATE TABLE baiKiemTra;
@@ -115,10 +116,10 @@ INSERT INTO hocSinh (maHocSinh, maNguoiDung, maPhuHuynh, ngaySinh, diemTongApos,
 
 -- 4) Classes and schedules
 INSERT INTO lopHoc (maLop, maLopHienThi, maKhoaHoc, maGiaoVien, lichHoc, ngayTao, updatedAt) VALUES
-(1, 'IELTS-FDN-01', 1, 1, 'Mon-Wed-Fri 18:00-19:30', '2026-01-05 08:00:00', '2026-04-20 10:00:00'),
-(2, 'IELTS-INT-02', 2, 2, 'Tue-Thu-Sat 19:30-21:00', '2026-01-06 08:15:00', '2026-04-20 10:10:00'),
-(3, 'IELTS-ADV-03', 3, 1, 'Sat-Sun 20:00-21:30', '2026-01-07 08:30:00', '2026-04-20 10:20:00'),
-(4, 'COMM-A2-01', 4, 3, 'Tue-Thu 17:30-19:00', '2026-01-08 08:45:00', '2026-04-20 10:30:00');
+(1, 'IELTS-FDN-01', 1, 1, 'Monday 18:00-19:30, Wednesday 18:00-19:30, Friday 18:00-19:30', '2026-01-05 08:00:00', '2026-04-20 10:00:00'),
+(2, 'IELTS-INT-02', 2, 2, 'Tuesday 19:30-21:00, Thursday 19:30-21:00, Saturday 19:30-21:00', '2026-01-06 08:15:00', '2026-04-20 10:10:00'),
+(3, 'IELTS-ADV-03', 3, 1, 'Saturday 20:00-21:30, Sunday 20:00-21:30', '2026-01-07 08:30:00', '2026-04-20 10:20:00'),
+(4, 'COMM-A2-01', 4, 3, 'Tuesday 17:30-19:00, Thursday 17:30-19:00', '2026-01-08 08:45:00', '2026-04-20 10:30:00');
 
 INSERT INTO hocSinhLopHoc (maHocSinh, maLop, ngayThamGia, trangThai) VALUES
 (1, 1, '2026-01-10', 'Dang_Hoc'),
