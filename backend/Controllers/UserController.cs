@@ -4,6 +4,7 @@ using Microsoft.AspNetCore.Authorization;
 using backend.Data;
 using backend.Models;
 using backend.DTOs;
+using backend.Helpers;
 namespace backend.Controllers
 {
     [Route("api/[controller]")]
@@ -99,7 +100,7 @@ namespace backend.Controllers
                 MaVaiTro = userDto.MaVaiTro,
                 AnhDaiDien = userDto.AnhDaiDien,
                 TrangThai = userDto.TrangThai,
-                NgayTao = DateTime.UtcNow
+                NgayTao = DateTimeHelper.GetVietnamNow()
             };
 
             _context.NguoiDungs.Add(newUser);

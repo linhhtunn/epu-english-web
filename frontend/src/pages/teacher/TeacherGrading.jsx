@@ -1,5 +1,6 @@
 import React, { useEffect, useMemo, useState } from "react";
 import { teacherService } from "../../services/teacherService";
+import { formatVietnamDateTime } from "../../utils/dateUtils";
 
 const statusConfig = {
     Cho_Cham: {
@@ -16,10 +17,7 @@ const statusConfig = {
     },
 };
 
-const formatDateTime = (value) => {
-    if (!value) return "---";
-    return new Date(value).toLocaleString("vi-VN");
-};
+const formatDateTime = (value) => formatVietnamDateTime(value);
 
 const TeacherGrading = () => {
     const [submissions, setSubmissions] = useState([]);

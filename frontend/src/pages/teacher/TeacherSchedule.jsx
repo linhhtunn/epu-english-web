@@ -2,10 +2,11 @@ import React, { useState, useEffect } from 'react';
 import ScheduleTable from '../../components/ScheduleTable';
 import { useAuth } from '../../context/AuthContext';
 import { teacherService } from '../../services/teacherService';
+import { getVietnamNow } from '../../utils/dateUtils';
 
 const TeacherSchedule = () => {
     const { user } = useAuth();
-    const [currentDate, setCurrentDate] = useState(new Date());
+    const [currentDate, setCurrentDate] = useState(getVietnamNow());
     const [allClasses, setAllClasses] = useState([]);
     const [classes, setClasses] = useState([]);
     const [loading, setLoading] = useState(true);
@@ -117,7 +118,7 @@ const TeacherSchedule = () => {
                     {/* Nút Hiện tại */}
                     <button 
                         className="btn btn-primary rounded-pill px-4 fw-bold shadow-sm" 
-                        onClick={() => setCurrentDate(new Date())}
+                        onClick={() => setCurrentDate(getVietnamNow())}
                         style={{ backgroundColor: '#007bff', border: 'none', height: '40px' }}
                     >
                         Hiện tại

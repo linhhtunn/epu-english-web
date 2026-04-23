@@ -1,6 +1,7 @@
 import React, { useEffect, useMemo, useState } from "react";
 import { useAuth } from "../../context/AuthContext";
 import { studentService } from "../../services/studentService";
+import { formatVietnamDateTime } from "../../utils/dateUtils";
 
 // Map mã kỹ năng từ DB sang tên hiển thị tiếng Việt
 const formatSkillName = (name) => {
@@ -298,11 +299,7 @@ const StudentReports = () => {
                                                             "Cập nhật điểm Apos"}
                                                     </div>
                                                     <small className="text-muted">
-                                                        {new Date(
-                                                            item.ngayTao,
-                                                        ).toLocaleString(
-                                                            "vi-VN",
-                                                        )}
+                                                        {formatVietnamDateTime(item.ngayTao)}
                                                     </small>
                                                 </div>
                                                 <span

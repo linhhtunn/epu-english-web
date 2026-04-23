@@ -4,6 +4,7 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using backend.Data;
+using backend.Helpers;
 
 namespace QuanLyTrungTam.Controllers
 {
@@ -39,7 +40,7 @@ namespace QuanLyTrungTam.Controllers
                 .FirstOrDefaultAsync(g => g.MaNguoiDung == userId);
             if (teacher == null) return NotFound(new { message = "Không tìm thấy thông tin giảng viên." });
 
-            var today = DateOnly.FromDateTime(DateTime.Today);
+            var today = DateTimeHelper.GetVietnamToday();
 
             // Fetch classes assigned to teacher
             var classes = await _context.LopHocs
@@ -126,7 +127,7 @@ namespace QuanLyTrungTam.Controllers
                 .FirstOrDefaultAsync(g => g.MaNguoiDung == userId);
             if (teacher == null) return NotFound(new { message = "Không tìm thấy thông tin giảng viên." });
 
-            var today = DateOnly.FromDateTime(DateTime.Today);
+            var today = DateTimeHelper.GetVietnamToday();
             var startOfWeek = today.AddDays(-(((int)today.DayOfWeek + 6) % 7));
             var endOfWeek = startOfWeek.AddDays(6);
 
@@ -219,7 +220,7 @@ namespace QuanLyTrungTam.Controllers
             var teacher = await _context.GiaoViens.FirstOrDefaultAsync(g => g.MaNguoiDung == userId);
             if (teacher == null) return NotFound(new { message = "Không tìm thấy thông tin giảng viên." });
 
-            var today = DateOnly.FromDateTime(DateTime.Today);
+            var today = DateTimeHelper.GetVietnamToday();
 
             var todaySessions = await _context.BuoiHocs
                 .Include(b => b.MaLopNavigation)
@@ -477,7 +478,7 @@ namespace QuanLyTrungTam.Controllers
             {
                 MaBaiTapGoc = request.MaBaiTapGoc,
                 MaLop = request.MaLop,
-                NgayGiao = DateTime.Now,
+                NgayGiao = DateTimeHelper.GetVietnamNow(),
                 HanNop = request.HanNop,
                 Link = request.Link,
                 TrangThai = "Dang_Mo" // Match DB constraint ('Dang_Mo', 'Dong', 'Huy')
@@ -577,7 +578,7 @@ namespace QuanLyTrungTam.Controllers
             if (student == null) return NotFound(new { message = "Không tìm thấy thông tin học sinh." });
 
             // Attendance stats in this class
-            var totalSessions = await _context.BuoiHocs.CountAsync(b => b.MaLop == classId && b.NgayHoc <= DateOnly.FromDateTime(DateTime.Today));
+            var totalSessions = await _context.BuoiHocs.CountAsync(b => b.MaLop == classId && b.NgayHoc <= DateTimeHelper.GetVietnamToday());
             var attendanceRecords = await _context.DiemDanhs
                 .Include(d => d.MaBuoiHocNavigation)
                 .Where(d => d.MaHocSinh == studentId && d.MaBuoiHocNavigation.MaLop == classId)

@@ -177,9 +177,13 @@ const TeacherClasses = () => {
                                                     : ""
                                             }
                                             style={{ cursor: "pointer" }}
-                                            onClick={() =>
-                                                setSelectedClass(cls)
-                                            }
+                                            onClick={() => {
+                                                if (selectedClass?.maLop === cls.maLop) {
+                                                    setSelectedClass(null);
+                                                } else {
+                                                    setSelectedClass(cls);
+                                                }
+                                            }}
                                         >
                                             <td className="ps-4">
                                                 <div className="fw-bold text-primary">

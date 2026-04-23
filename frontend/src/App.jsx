@@ -218,6 +218,9 @@ import TeacherHomeworkAssign from "./pages/teacher/TeacherHomeworkAssign";
 // Import Parent Pages
 import ParentAttendance from "./pages/parent/ParentAttendance";
 
+// Import Shared Pages
+import ProfilePage from "./pages/shared/ProfilePage";
+
 const Placeholder = ({ title }) => (
     <div className="p-4 animate__animated animate__fadeIn">
         <div className="card border-0 shadow-sm rounded-5 p-5 text-center">
@@ -424,7 +427,7 @@ function App() {
                             path="/admin/profile"
                             element={
                                 <PrivateRoute allowedRoles={["Admin"]}>
-                                    <Placeholder title="Hồ sơ cá nhân" />
+                                    <ProfilePage />
                                 </PrivateRoute>
                             }
                         />
@@ -514,7 +517,7 @@ function App() {
                             path="/teacher/profile"
                             element={
                                 <PrivateRoute allowedRoles={["Giao_Vien"]}>
-                                    <Placeholder title="Thông tin cá nhân giáo viên" />
+                                    <ProfilePage />
                                 </PrivateRoute>
                             }
                         />
@@ -576,6 +579,14 @@ function App() {
                                 </PrivateRoute>
                             }
                         />
+                        <Route
+                            path="/student/profile"
+                            element={
+                                <PrivateRoute allowedRoles={["Hoc_Sinh"]}>
+                                    <ProfilePage />
+                                </PrivateRoute>
+                            }
+                        />
 
                         {/* --- NHÓM PHỤ HUYNH (PARENT) --- */}
                         <Route
@@ -615,6 +626,14 @@ function App() {
                             element={
                                 <PrivateRoute allowedRoles={["Phu_Huynh"]}>
                                     <Placeholder title="Báo cáo thống kê" />
+                                </PrivateRoute>
+                            }
+                        />
+                        <Route
+                            path="/parent/profile"
+                            element={
+                                <PrivateRoute allowedRoles={["Phu_Huynh"]}>
+                                    <ProfilePage />
                                 </PrivateRoute>
                             }
                         />

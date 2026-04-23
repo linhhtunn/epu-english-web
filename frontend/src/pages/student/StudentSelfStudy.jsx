@@ -1,6 +1,7 @@
 import React, { useEffect, useMemo, useState } from "react";
 import { useAuth } from "../../context/AuthContext";
 import { studentService } from "../../services/studentService";
+import { getVietnamNow, formatVietnamDateTime } from "../../utils/dateUtils";
 
 // Map mã kỹ năng từ DB sang tên hiển thị tiếng Việt
 const formatSkillName = (name) => {
@@ -58,23 +59,28 @@ const StudentSelfStudy = () => {
     }, [user?.profileId]);
 
     const upcomingTasks = useMemo(() => {
-        const now = Date.now();
+        const now = getVietnamNow();
         return homeworks
             .filter(
-                (item) => item.status === "Cho_Nop" || item.status === "Da_Nop",
+                (item) => item.status === "Cho_Nop" || item.status === "Da_Nop" || item.status === "Qua_Han",
             )
             .sort(
                 (a, b) =>
                     new Date(a.dueAt).getTime() - new Date(b.dueAt).getTime(),
             )
             .slice(0, 5)
-            .map((item) => ({
-                ...item,
-                daysLeft: Math.ceil(
-                    (new Date(item.dueAt).getTime() - now) /
-                        (1000 * 60 * 60 * 24),
-                ),
-            }));
+            .map((item) => {
+                const dueDate = new Date(item.dueAt);
+                const isOverdue = now > dueDate;
+                const diffTime = dueDate.getTime() - now.getTime();
+                const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+                
+                return {
+                    ...item,
+                    isOverdue,
+                    daysLeft: diffDays
+                };
+            });
     }, [homeworks]);
 
     const weakSkills = useMemo(() => {
@@ -148,18 +154,28 @@ const StudentSelfStudy = () => {
                                                     </small>
                                                 </div>
                                                 <span
-                                                    className={`badge rounded-pill ${task.daysLeft <= 1 ? "bg-danger" : "bg-warning text-dark"}`}
+                                                    className={`badge rounded-pill ${
+                                                        task.status === "Da_Nop" 
+                                                            ? "bg-success" 
+                                                            : task.isOverdue 
+                                                                ? "bg-danger" 
+                                                                : task.daysLeft <= 1 
+                                                                    ? "bg-danger" 
+                                                                    : "bg-warning text-dark"
+                                                    }`}
                                                 >
-                                                    {task.daysLeft <= 0
-                                                        ? "Đến hạn hôm nay"
-                                                        : `Còn ${task.daysLeft} ngày`}
+                                                    {task.status === "Da_Nop"
+                                                        ? "Đã nộp"
+                                                        : task.isOverdue
+                                                            ? "Đã quá hạn"
+                                                            : task.daysLeft === 0
+                                                                ? "Đến hạn hôm nay"
+                                                                : `Còn ${task.daysLeft} ngày`}
                                                 </span>
                                             </div>
                                             <p className="small text-muted mt-2 mb-0">
                                                 Hạn nộp:{" "}
-                                                {new Date(
-                                                    task.dueAt,
-                                                ).toLocaleString("vi-VN")}
+                                                {formatVietnamDateTime(task.dueAt)}
                                             </p>
                                         </div>
                                     ))}

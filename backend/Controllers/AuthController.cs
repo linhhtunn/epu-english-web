@@ -61,7 +61,7 @@ namespace backend.Controllers
             var (token, expiresAtUtc) = _jwtHelper.GenerateToken(user, roleName, profileId);
 
             // 4. Trả về Object đầy đủ cho React
-            user.LanDangNhapCuoi = DateTime.UtcNow;
+            user.LanDangNhapCuoi = DateTimeHelper.GetVietnamNow();
             await _context.SaveChangesAsync();
 
             return Ok(new

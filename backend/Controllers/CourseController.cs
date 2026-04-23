@@ -4,6 +4,7 @@ using Microsoft.AspNetCore.Authorization;
 using backend.Data;
 using backend.Models;
 using backend.DTOs;
+using backend.Helpers;
 
 namespace backend.Controllers
 {
@@ -50,7 +51,7 @@ namespace backend.Controllers
                 TenKhoaHoc = courseDto.TenKhoaHoc,
                 CapDo = courseDto.CapDo,
                 MoTa = courseDto.MoTa,
-                NgayTao = DateTime.UtcNow
+                NgayTao = DateTimeHelper.GetVietnamNow()
             };
 
             _context.KhoaHocs.Add(newCourse);

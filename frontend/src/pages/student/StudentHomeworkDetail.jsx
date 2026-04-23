@@ -2,6 +2,7 @@ import React, { useEffect, useState } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { useAuth } from "../../context/AuthContext";
 import { studentService } from "../../services/studentService";
+import { formatVietnamDateTime } from "../../utils/dateUtils";
 
 const statusConfig = {
     Cho_Nop: { label: "Chờ nộp", className: "bg-primary-subtle text-primary", icon: "bi-hourglass-split" },
@@ -27,10 +28,7 @@ const skillMap = {
     Noi: "Nói",
 };
 
-const formatDateTime = (value) => {
-    if (!value) return "---";
-    return new Date(value).toLocaleString("vi-VN");
-};
+const formatDateTime = (value) => formatVietnamDateTime(value);
 
 const StudentHomeworkDetail = () => {
     const { id } = useParams();

@@ -4,6 +4,7 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using backend.Data;
+using backend.Helpers;
 
 namespace QuanLyTrungTam.Controllers
 {
@@ -37,7 +38,7 @@ namespace QuanLyTrungTam.Controllers
                 return Unauthorized(new { message = "Token không hợp lệ." });
             }
 
-            var today = DateOnly.FromDateTime(DateTime.Today);
+            var today = DateTimeHelper.GetVietnamToday();
             var startOfWeek = today.AddDays(-(((int)today.DayOfWeek + 6) % 7));
             var endOfWeek = startOfWeek.AddDays(6);
 
@@ -136,7 +137,7 @@ namespace QuanLyTrungTam.Controllers
 
             if (!isOwner) return Forbid();
 
-            var today = DateOnly.FromDateTime(DateTime.Today);
+            var today = DateTimeHelper.GetVietnamToday();
             var startOfWeek = today.AddDays(-(((int)today.DayOfWeek + 6) % 7));
             var endOfWeek = startOfWeek.AddDays(6);
 

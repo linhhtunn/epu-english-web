@@ -2,6 +2,7 @@ import React, { useEffect, useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "../../context/AuthContext";
 import { studentService } from "../../services/studentService";
+import { formatVietnamDateTime } from "../../utils/dateUtils";
 
 const statusConfig = {
     Cho_Nop: { label: "Chờ nộp", className: "bg-primary-subtle text-primary" },
@@ -10,10 +11,7 @@ const statusConfig = {
     Qua_Han: { label: "Quá hạn", className: "bg-danger-subtle text-danger" },
 };
 
-const formatDateTime = (value) => {
-    if (!value) return "---";
-    return new Date(value).toLocaleString("vi-VN");
-};
+const formatDateTime = (value) => formatVietnamDateTime(value);
 
 const StudentHomeworkList = () => {
     const { user } = useAuth();
