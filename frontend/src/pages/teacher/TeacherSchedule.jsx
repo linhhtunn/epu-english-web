@@ -2,12 +2,16 @@ import React, { useState, useEffect } from 'react';
 import ScheduleTable from '../../components/ScheduleTable';
 import { useAuth } from '../../context/AuthContext';
 import { teacherService } from '../../services/teacherService';
+import { getVietnamNow } from '../../utils/dateUtils';
 
 const TeacherSchedule = () => {
     const { user } = useAuth();
-    const [currentDate, setCurrentDate] = useState(new Date());
+    const [currentDate, setCurrentDate] = useState(getVietnamNow());
+    const [allClasses, setAllClasses] = useState([]);
     const [classes, setClasses] = useState([]);
     const [loading, setLoading] = useState(true);
+    const [teacherClasses, setTeacherClasses] = useState([]);
+    const [selectedClassFilter, setSelectedClassFilter] = useState("all");
 
     const formatDate = (date) => {
         const year = date.getFullYear();
@@ -29,6 +33,19 @@ const TeacherSchedule = () => {
         };
     };
 
+    // Fetch teacher's assigned classes (for dropdown)
+    useEffect(() => {
+        const fetchTeacherClasses = async () => {
+            try {
+                const data = await teacherService.getClasses();
+                setTeacherClasses(data);
+            } catch (err) {
+                console.error("Lỗi khi tải danh sách lớp:", err);
+            }
+        };
+        fetchTeacherClasses();
+    }, []);
+
     useEffect(() => {
         document.title = "Lịch dạy | EPU English";
         const fetchSchedule = async () => {
@@ -36,7 +53,7 @@ const TeacherSchedule = () => {
             try {
                 const { fromDate, toDate } = getWeekRange(currentDate);
                 const data = await teacherService.getSchedule(fromDate, toDate);
-                setClasses(data); 
+                setAllClasses(data);
             } catch (err) {
                 console.error("Lỗi khi tải lịch dạy:", err);
             } finally {
@@ -47,6 +64,15 @@ const TeacherSchedule = () => {
         fetchSchedule();
     }, [currentDate]);
 
+    // Apply class filter
+    useEffect(() => {
+        if (selectedClassFilter === "all") {
+            setClasses(allClasses);
+        } else {
+            setClasses(allClasses.filter(c => c.code === selectedClassFilter));
+        }
+    }, [allClasses, selectedClassFilter]);
+
     const changeWeek = (amount) => {
         const newDate = new Date(currentDate);
         newDate.setDate(currentDate.getDate() + (amount * 7));
@@ -56,7 +82,7 @@ const TeacherSchedule = () => {
     return (
         <div className="p-4 animate__animated animate__fadeIn">
             {/* --- HEADER --- */}
-            <div className="d-flex justify-content-between align-items-center mb-4">
+            <div className="d-flex justify-content-between align-items-center mb-4 flex-wrap gap-3">
                 <div>
                     <h2 className="fw-bold text-dark mb-1 text-uppercase" style={{ fontSize: '24px' }}>
                         Lịch dạy cá nhân
@@ -71,12 +97,28 @@ const TeacherSchedule = () => {
                     </div>
                 </div>
                 
-                {/* --- CỤM ĐIỀU HƯỚNG THỜI GIAN (COPY TỪ PHỤ HUYNH) --- */}
-                <div className="d-flex align-items-center gap-2">
+                <div className="d-flex align-items-center gap-2 flex-wrap">
+                    {/* Dropdown lọc lớp */}
+                    {teacherClasses.length > 0 && (
+                        <select
+                            className="form-select rounded-pill border-2 px-3 fw-bold"
+                            style={{ width: 'auto', height: '40px' }}
+                            value={selectedClassFilter}
+                            onChange={(e) => setSelectedClassFilter(e.target.value)}
+                        >
+                            <option value="all">Tất cả lớp</option>
+                            {teacherClasses.map((cls) => (
+                                <option key={cls.maLop} value={cls.maLopHienThi}>
+                                    {cls.maLopHienThi} - {cls.courseName}
+                                </option>
+                            ))}
+                        </select>
+                    )}
+
                     {/* Nút Hiện tại */}
                     <button 
                         className="btn btn-primary rounded-pill px-4 fw-bold shadow-sm" 
-                        onClick={() => setCurrentDate(new Date())}
+                        onClick={() => setCurrentDate(getVietnamNow())}
                         style={{ backgroundColor: '#007bff', border: 'none', height: '40px' }}
                     >
                         Hiện tại

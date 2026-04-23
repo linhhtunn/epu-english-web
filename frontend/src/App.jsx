@@ -196,6 +196,7 @@ import StudentNotifications from "./pages/student/StudentNotifications";
 import ParentDashboard from "./pages/parent/ParentDashboard";
 import ParentSchedule from "./pages/parent/ParentSchedule";
 import SchedulePage from "./pages/student/SchedulePage";
+import StudentHomeworkDetail from "./pages/student/StudentHomeworkDetail";
 
 // Import Admin Pages
 import AdminSchedule from "./pages/admin/AdminSchedule";
@@ -210,9 +211,15 @@ import AdminCreateUser from "./pages/admin/AdminCreateUser";
 
 // Import Teacher Pages
 import TeacherAttendance from "./pages/teacher/TeacherAttendance";
+import TeacherGrading from "./pages/teacher/TeacherGrading";
+import TeacherClasses from "./pages/teacher/TeacherClasses";
+import TeacherHomeworkAssign from "./pages/teacher/TeacherHomeworkAssign";
 
 // Import Parent Pages
 import ParentAttendance from "./pages/parent/ParentAttendance";
+
+// Import Shared Pages
+import ProfilePage from "./pages/shared/ProfilePage";
 
 const Placeholder = ({ title }) => (
     <div className="p-4 animate__animated animate__fadeIn">
@@ -420,7 +427,7 @@ function App() {
                             path="/admin/profile"
                             element={
                                 <PrivateRoute allowedRoles={["Admin"]}>
-                                    <Placeholder title="Hồ sơ cá nhân" />
+                                    <ProfilePage />
                                 </PrivateRoute>
                             }
                         />
@@ -454,15 +461,7 @@ function App() {
                             path="/teacher/classes"
                             element={
                                 <PrivateRoute allowedRoles={["Giao_Vien"]}>
-                                    <Placeholder title="Quản lý lớp học" />
-                                </PrivateRoute>
-                            }
-                        />
-                        <Route
-                            path="/teacher/exams"
-                            element={
-                                <PrivateRoute allowedRoles={["Giao_Vien"]}>
-                                    <Placeholder title="Quản lý bài tập - Đề thi" />
+                                    <TeacherClasses />
                                 </PrivateRoute>
                             }
                         />
@@ -470,7 +469,7 @@ function App() {
                             path="/teacher/grading"
                             element={
                                 <PrivateRoute allowedRoles={["Giao_Vien"]}>
-                                    <Placeholder title="Chấm điểm" />
+                                    <TeacherGrading />
                                 </PrivateRoute>
                             }
                         />
@@ -483,10 +482,10 @@ function App() {
                             }
                         />
                         <Route
-                            path="/teacher/notifications"
+                            path="/teacher/homework-assign"
                             element={
                                 <PrivateRoute allowedRoles={["Giao_Vien"]}>
-                                    <Placeholder title="Thông báo" />
+                                    <TeacherHomeworkAssign />
                                 </PrivateRoute>
                             }
                         />
@@ -495,6 +494,14 @@ function App() {
                             element={
                                 <PrivateRoute allowedRoles={["Giao_Vien"]}>
                                     <Placeholder title="Quản lý nhắn tin" />
+                                </PrivateRoute>
+                            }
+                        />
+                        <Route
+                            path="/teacher/notifications"
+                            element={
+                                <PrivateRoute allowedRoles={["Giao_Vien"]}>
+                                    <Placeholder title="Thông báo" />
                                 </PrivateRoute>
                             }
                         />
@@ -510,7 +517,7 @@ function App() {
                             path="/teacher/profile"
                             element={
                                 <PrivateRoute allowedRoles={["Giao_Vien"]}>
-                                    <Placeholder title="Thông tin cá nhân giáo viên" />
+                                    <ProfilePage />
                                 </PrivateRoute>
                             }
                         />
@@ -564,6 +571,22 @@ function App() {
                                 </PrivateRoute>
                             }
                         />
+                        <Route
+                            path="/student/homework-list/:id"
+                            element={
+                                <PrivateRoute allowedRoles={["Hoc_Sinh"]}>
+                                    <StudentHomeworkDetail />
+                                </PrivateRoute>
+                            }
+                        />
+                        <Route
+                            path="/student/profile"
+                            element={
+                                <PrivateRoute allowedRoles={["Hoc_Sinh"]}>
+                                    <ProfilePage />
+                                </PrivateRoute>
+                            }
+                        />
 
                         {/* --- NHÓM PHỤ HUYNH (PARENT) --- */}
                         <Route
@@ -603,6 +626,14 @@ function App() {
                             element={
                                 <PrivateRoute allowedRoles={["Phu_Huynh"]}>
                                     <Placeholder title="Báo cáo thống kê" />
+                                </PrivateRoute>
+                            }
+                        />
+                        <Route
+                            path="/parent/profile"
+                            element={
+                                <PrivateRoute allowedRoles={["Phu_Huynh"]}>
+                                    <ProfilePage />
                                 </PrivateRoute>
                             }
                         />

@@ -4,6 +4,7 @@ using Microsoft.AspNetCore.Authorization;
 using backend.Data;
 using backend.Models;
 using backend.DTOs;
+using backend.Helpers;
 
 namespace backend.Controllers
 {
@@ -83,7 +84,7 @@ namespace backend.Controllers
                 MaKhoaHoc = classDto.MaKhoaHoc,
                 MaGiaoVien = classDto.MaGiaoVien,
                 LichHoc = classDto.LichHoc,
-                NgayTao = DateTime.UtcNow
+                NgayTao = DateTimeHelper.GetVietnamNow()
             };
 
             _context.LopHocs.Add(newClass);
@@ -171,7 +172,7 @@ namespace backend.Controllers
                 MaLop = classId,
                 MaHocSinh = studentId,
                 TrangThai = "Dang_Hoc",
-                NgayThamGia = DateOnly.FromDateTime(DateTime.Today)
+                NgayThamGia = DateTimeHelper.GetVietnamToday()
             };
 
             _context.HocSinhLopHocs.Add(assignment);
@@ -202,15 +203,75 @@ namespace backend.Controllers
             return Ok(students);
         }
 
-        // DELETE: api/Class/{classId}/removeStudent/{studentId}
+        // GET: api/Class/{classId}/studentData/{studentId}
+        // Check what data a student has in a class before removal
+        [HttpGet("{classId}/studentData/{studentId}")]
+        public async Task<IActionResult> GetStudentDataInClass(int classId, int studentId)
+        {
+            var assignment = await _context.HocSinhLopHocs
+                .FirstOrDefaultAsync(h => h.MaLop == classId && h.MaHocSinh == studentId);
+            if (assignment == null)
+                return NotFound("Học sinh không có trong lớp này.");
+
+            var attendanceCount = await _context.DiemDanhs
+                .CountAsync(d => d.MaHocSinh == studentId && d.MaBuoiHocNavigation.MaLop == classId);
+
+            var submissionCount = await _context.BaiNopHocSinhs
+                .CountAsync(s => s.MaHocSinh == studentId && s.MaBaiTapNavigation.MaLop == classId);
+
+            return Ok(new
+            {
+                maHocSinh = studentId,
+                maLop = classId,
+                attendanceCount,
+                submissionCount,
+                hasData = attendanceCount > 0 || submissionCount > 0
+            });
+        }
+
+        // DELETE: api/Class/{classId}/removeStudent/{studentId}?force=true
         [HttpDelete("{classId}/removeStudent/{studentId}")]
-        public async Task<IActionResult> RemoveStudent(int classId, int studentId)
+        public async Task<IActionResult> RemoveStudent(int classId, int studentId, [FromQuery] bool force = false)
         {
             var assignment = await _context.HocSinhLopHocs
                 .FirstOrDefaultAsync(hslh => hslh.MaLop == classId && hslh.MaHocSinh == studentId);
 
             if (assignment == null)
                 return NotFound("Học sinh không có trong lớp này.");
+
+            // Check for related data
+            var attendanceCount = await _context.DiemDanhs
+                .CountAsync(d => d.MaHocSinh == studentId && d.MaBuoiHocNavigation.MaLop == classId);
+            var submissionCount = await _context.BaiNopHocSinhs
+                .CountAsync(s => s.MaHocSinh == studentId && s.MaBaiTapNavigation.MaLop == classId);
+
+            bool hasData = attendanceCount > 0 || submissionCount > 0;
+
+            if (hasData && !force)
+            {
+                return BadRequest(new
+                {
+                    message = "Học sinh có dữ liệu học tập trong lớp này. Sử dụng force=true để xác nhận xóa.",
+                    attendanceCount,
+                    submissionCount
+                });
+            }
+
+            // If force or no data, proceed with removal
+            if (hasData)
+            {
+                // Remove related attendance records
+                var attendances = await _context.DiemDanhs
+                    .Where(d => d.MaHocSinh == studentId && d.MaBuoiHocNavigation.MaLop == classId)
+                    .ToListAsync();
+                _context.DiemDanhs.RemoveRange(attendances);
+
+                // Remove related submission records
+                var submissions = await _context.BaiNopHocSinhs
+                    .Where(s => s.MaHocSinh == studentId && s.MaBaiTapNavigation.MaLop == classId)
+                    .ToListAsync();
+                _context.BaiNopHocSinhs.RemoveRange(submissions);
+            }
 
             _context.HocSinhLopHocs.Remove(assignment);
             await _context.SaveChangesAsync();

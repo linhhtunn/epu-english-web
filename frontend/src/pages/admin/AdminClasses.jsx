@@ -44,21 +44,34 @@ const AdminClasses = () => {
     };
 
     const handleRemoveStudent = async (studentId) => {
-        if (!window.confirm("Bạn có chắc chắn muốn xóa học viên này khỏi lớp?"))
-            return;
-
         try {
-            await classService.removeStudent(selectedClass.maLop, studentId);
+            // First check if student has any data in this class
+            const dataInfo = await classService.checkStudentData(selectedClass.maLop, studentId);
+            
+            let confirmMsg = "";
+            if (dataInfo.hasData) {
+                const parts = [];
+                if (dataInfo.attendanceCount > 0) parts.push(`${dataInfo.attendanceCount} bản ghi điểm danh`);
+                if (dataInfo.submissionCount > 0) parts.push(`${dataInfo.submissionCount} bài nộp`);
+                
+                confirmMsg = `⚠️ Học viên này có dữ liệu trong lớp:\n\n` +
+                    `• ${parts.join("\n• ")}\n\n` +
+                    `Xóa học viên sẽ XÓA TOÀN BỘ dữ liệu trên.\n\n` +
+                    `Bạn có chắc chắn muốn tiếp tục?`;
+            } else {
+                confirmMsg = "Học viên này chưa có dữ liệu nào trong lớp.\n\nBạn có chắc chắn muốn xóa khỏi lớp?";
+            }
+
+            if (!window.confirm(confirmMsg)) return;
+
+            await classService.removeStudent(selectedClass.maLop, studentId, dataInfo.hasData);
             // Refresh student list
-            const students = await classService.getStudentsInClass(
-                selectedClass.maLop,
-            );
+            const students = await classService.getStudentsInClass(selectedClass.maLop);
             setClassStudents(students);
-            // Refresh class list to update count
             fetchClasses();
         } catch (error) {
             console.error("Lỗi khi xóa học viên:", error);
-            alert("Xóa học viên thất bại!");
+            alert(error.response?.data?.message || "Xóa học viên thất bại!");
         }
     };
 

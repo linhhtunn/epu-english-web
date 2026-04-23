@@ -282,12 +282,9 @@ const Dashboard = () => {
                     </div>
                 ) : (
                     <div className="bg-white rounded-5 py-5 shadow-sm border border-dashed border-2 text-center">
-                        <img
-                            src="https://active.apollo.edu.vn/static/media/robot-empty.6200236a.png"
-                            alt="robot"
-                            style={{ width: "150px" }}
-                            className="mb-4"
-                        />
+                        <div className="mb-4">
+                            <i className="bi bi-calendar-x text-muted" style={{ fontSize: "4rem" }}></i>
+                        </div>
                         <h5 className="fw-bold text-dark">
                             Hiện chưa có lớp học nào
                         </h5>

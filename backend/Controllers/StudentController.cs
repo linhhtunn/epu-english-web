@@ -1,6 +1,8 @@
 using System.IdentityModel.Tokens.Jwt;
 using System.Security.Claims;
 using backend.Data;
+using backend.Helpers;
+using backend.Models;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
@@ -61,23 +63,24 @@ public class StudentController : ControllerBase
             .Where(d => d.MaHocSinh == studentId && (d.TrangThai == "Co_Mat" || d.TrangThai == "Di_Muon"))
             .CountAsync();
 
+        var now = DateTimeHelper.GetVietnamNow();
         var totalHomeworks = classIds.Count == 0
             ? 0
-            : await _context.BaiTapVeNhas.Where(b => classIds.Contains(b.MaLop)).CountAsync();
+            : await _context.BaiTapVeNhas.Where(b => classIds.Contains(b.MaLop) && b.NgayGiao <= now).CountAsync();
 
         var submittedHomeworks = await _context.BaiNopHocSinhs
             .Where(s => s.MaHocSinh == studentId)
             .CountAsync();
 
         var completedHomeworks = await _context.BaiNopHocSinhs
-            .Where(s => s.MaHocSinh == studentId && (s.TrangThai == "Da_Cham" || s.TrangThai == "Cho_Cham"))
+            .Where(s => s.MaHocSinh == studentId && (s.TrangThai == "Da_Cham" || s.TrangThai == "Cho_Cham" || s.TrangThai == "Da_Nop"))
             .CountAsync();
 
         var testAverage = await _context.KetQuaKiemTras
             .Where(k => k.MaHocSinh == studentId && k.DiemSo != null)
             .AverageAsync(k => (double?)k.DiemSo) ?? 0;
 
-        var today = DateOnly.FromDateTime(DateTime.Today);
+        var today = DateTimeHelper.GetVietnamToday();
 
         var todayClasses = new List<object>();
         if (classIds.Count > 0)
@@ -149,7 +152,7 @@ public class StudentController : ControllerBase
             return Forbid();
         }
 
-        var today = DateOnly.FromDateTime(DateTime.Today);
+        var today = DateTimeHelper.GetVietnamToday();
         var startOfWeek = today.AddDays(-(((int)today.DayOfWeek + 6) % 7));
         var endOfWeek = startOfWeek.AddDays(6);
 
@@ -224,7 +227,7 @@ public class StudentController : ControllerBase
             return Ok(Array.Empty<object>());
         }
 
-        var now = DateTime.UtcNow;
+        var now = DateTimeHelper.GetVietnamNow();
 
         var rawHomeworks = await _context.BaiTapVeNhas
             .Where(b => classIds.Contains(b.MaLop))
@@ -284,6 +287,91 @@ public class StudentController : ControllerBase
         return Ok(mapped);
     }
 
+    [HttpGet("{studentId}/homeworks/{homeworkId}")]
+    public async Task<IActionResult> GetHomeworkDetail(int studentId, int homeworkId)
+    {
+        if (!CanAccessStudent(studentId))
+        {
+            return Forbid();
+        }
+
+        var classIds = await _context.HocSinhLopHocs
+            .Where(h => h.MaHocSinh == studentId)
+            .Select(h => h.MaLop)
+            .Distinct()
+            .ToListAsync();
+
+        var now = DateTimeHelper.GetVietnamNow();
+
+        var homework = await _context.BaiTapVeNhas
+            .Where(b => b.MaBaiTap == homeworkId && classIds.Contains(b.MaLop))
+            .Select(b => new
+            {
+                b.MaBaiTap,
+                title = b.MaBaiTapGocNavigation.TieuDe,
+                description = b.MaBaiTapGocNavigation.NoiDung,
+                homeworkLink = b.Link ?? b.MaBaiTapGocNavigation.Link,
+                classCode = b.MaLopNavigation.MaLopHienThi,
+                courseName = b.MaLopNavigation.MaKhoaHocNavigation.TenKhoaHoc,
+                assignedAt = b.NgayGiao,
+                dueAt = b.HanNop,
+                rewardPoints = b.ThuongApos,
+                submitType = b.KieuNop,
+                difficulty = b.MaBaiTapGocNavigation.DoKho,
+                duration = b.MaBaiTapGocNavigation.ThoiGianLamBaiPhut,
+                skillType = b.MaBaiTapGocNavigation.LoaiHocThuat,
+                submission = b.BaiNopHocSinhs
+                    .Where(s => s.MaHocSinh == studentId)
+                    .Select(s => new
+                    {
+                        s.MaBaiNop,
+                        s.NgayNop,
+                        s.DiemSo,
+                        s.TrangThai,
+                        s.LoiPheGiaoVien,
+                        s.DuongDanBaiLam
+                    })
+                    .FirstOrDefault()
+            })
+            .FirstOrDefaultAsync();
+
+        if (homework == null)
+        {
+            return NotFound(new { message = "Không tìm thấy bài tập." });
+        }
+
+        string computedStatus;
+        if (homework.submission != null)
+        {
+            computedStatus = homework.submission.TrangThai == "Da_Cham" ? "Da_Cham"
+                : homework.submission.TrangThai == "Can_Lam_Lai" ? "Can_Lam_Lai"
+                : "Da_Nop";
+        }
+        else
+        {
+            computedStatus = homework.dueAt < now ? "Qua_Han" : "Cho_Nop";
+        }
+
+        return Ok(new
+        {
+            homework.MaBaiTap,
+            homework.title,
+            homework.description,
+            homework.homeworkLink,
+            homework.classCode,
+            homework.courseName,
+            homework.assignedAt,
+            homework.dueAt,
+            homework.rewardPoints,
+            homework.submitType,
+            homework.difficulty,
+            homework.duration,
+            homework.skillType,
+            status = computedStatus,
+            homework.submission
+        });
+    }
+
     [HttpGet("{studentId}/reports")]
     public async Task<IActionResult> GetReports(int studentId)
     {
@@ -292,15 +380,31 @@ public class StudentController : ControllerBase
             return Forbid();
         }
 
-        var stats = await _context.ThongKeHocTaps
-            .Where(t => t.MaHocSinh == studentId)
-            .Select(t => new
-            {
-                totalAssignments = t.TongBaiTap ?? 0,
-                completedAssignments = t.TongBaiHoanThanh ?? 0,
-                averageScore = t.DiemTrungBinh ?? 0
-            })
-            .FirstOrDefaultAsync();
+        var classIds = await _context.HocSinhLopHocs
+            .Where(h => h.MaHocSinh == studentId)
+            .Select(h => h.MaLop)
+            .Distinct()
+            .ToListAsync();
+
+        var now = DateTimeHelper.GetVietnamNow();
+
+        var totalAssignments = classIds.Any() 
+            ? await _context.BaiTapVeNhas.CountAsync(b => classIds.Contains(b.MaLop) && b.NgayGiao <= now) 
+            : 0;
+
+        var completedAssignments = await _context.BaiNopHocSinhs
+            .CountAsync(s => s.MaHocSinh == studentId && (s.TrangThai == "Da_Nop" || s.TrangThai == "Da_Cham" || s.TrangThai == "Cho_Cham"));
+
+        var averageScore = await _context.BaiNopHocSinhs
+            .Where(s => s.MaHocSinh == studentId && s.TrangThai == "Da_Cham" && s.DiemSo != null)
+            .AverageAsync(s => (double?)s.DiemSo) ?? 0;
+
+        var stats = new
+        {
+            totalAssignments,
+            completedAssignments,
+            averageScore = Math.Round(averageScore, 2)
+        };
 
         var reportCards = await _context.BaoCaoBaiHocs
             .Where(b => b.MaHocSinh == studentId)
@@ -359,12 +463,63 @@ public class StudentController : ControllerBase
 
         return Ok(new
         {
-            stats = stats ?? new { totalAssignments = 0, completedAssignments = 0, averageScore = 0m },
+            stats,
             reportCards,
             skillBreakdown,
             examResults,
             aposHistory
         });
+    }
+
+    [HttpPost("{studentId}/homeworks/{homeworkId}/submit")]
+    public async Task<IActionResult> SubmitHomework(int studentId, int homeworkId, [FromBody] SubmitRequest request)
+    {
+        if (!CanAccessStudent(studentId))
+        {
+            return Forbid();
+        }
+
+        var homework = await _context.BaiTapVeNhas
+            .FirstOrDefaultAsync(b => b.MaBaiTap == homeworkId);
+
+        if (homework == null)
+        {
+            return NotFound(new { message = "Không tìm thấy bài tập." });
+        }
+
+        // Optional: Check if deadline passed
+        // if (homework.HanNop < DateTime.UtcNow) return BadRequest(new { message = "Hạn nộp bài đã kết thúc." });
+
+        var existingSubmission = await _context.BaiNopHocSinhs
+            .FirstOrDefaultAsync(s => s.MaHocSinh == studentId && s.MaBaiTap == homeworkId);
+
+        if (existingSubmission != null)
+        {
+            existingSubmission.NgayNop = DateTimeHelper.GetVietnamNow();
+            existingSubmission.DuongDanBaiLam = request.SubmissionLink;
+            existingSubmission.TrangThai = "Cho_Cham";
+        }
+        else
+        {
+            var submission = new BaiNopHocSinh
+            {
+                MaHocSinh = studentId,
+                MaBaiTap = homeworkId,
+                NgayNop = DateTimeHelper.GetVietnamNow(),
+                DuongDanBaiLam = request.SubmissionLink,
+                TrangThai = "Cho_Cham"
+            };
+            _context.BaiNopHocSinhs.Add(submission);
+        }
+
+        await _context.SaveChangesAsync();
+
+        return Ok(new { message = "Nộp bài thành công." });
+    }
+
+    public class SubmitRequest
+    {
+        public string SubmissionLink { get; set; } = null!;
     }
 
     [HttpGet("notifications")]

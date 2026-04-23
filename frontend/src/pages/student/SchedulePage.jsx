@@ -2,9 +2,10 @@ import React, { useEffect, useState } from "react";
 import ScheduleTable from "../../components/ScheduleTable";
 import { useAuth } from "../../context/AuthContext";
 import { studentService } from "../../services/studentService";
+import { getVietnamNow } from "../../utils/dateUtils";
 
 const SchedulePage = () => {
-    const [viewDate, setViewDate] = useState(new Date());
+    const [viewDate, setViewDate] = useState(getVietnamNow());
     const [scheduleData, setScheduleData] = useState([]);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState("");
@@ -73,7 +74,7 @@ const SchedulePage = () => {
         setViewDate(d);
     };
 
-    const handleToday = () => setViewDate(new Date());
+    const handleToday = () => setViewDate(getVietnamNow());
 
     return (
         <div

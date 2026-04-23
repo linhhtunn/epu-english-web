@@ -1,6 +1,8 @@
 import React, { useEffect, useMemo, useState } from "react";
+import { useNavigate } from "react-router-dom";
 import { useAuth } from "../../context/AuthContext";
 import { studentService } from "../../services/studentService";
+import { formatVietnamDateTime } from "../../utils/dateUtils";
 
 const statusConfig = {
     Cho_Nop: { label: "Chờ nộp", className: "bg-primary-subtle text-primary" },
@@ -9,13 +11,11 @@ const statusConfig = {
     Qua_Han: { label: "Quá hạn", className: "bg-danger-subtle text-danger" },
 };
 
-const formatDateTime = (value) => {
-    if (!value) return "---";
-    return new Date(value).toLocaleString("vi-VN");
-};
+const formatDateTime = (value) => formatVietnamDateTime(value);
 
 const StudentHomeworkList = () => {
     const { user } = useAuth();
+    const navigate = useNavigate();
     const [items, setItems] = useState([]);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState("");
@@ -53,7 +53,6 @@ const StudentHomeworkList = () => {
         if (statusFilter === "all") {
             return items;
         }
-
         return items.filter((item) => item.status === statusFilter);
     }, [items, statusFilter]);
 
@@ -64,13 +63,11 @@ const StudentHomeworkList = () => {
             graded: 0,
             overdue: 0,
         };
-
         items.forEach((item) => {
             if (item.status === "Cho_Nop") counts.pending += 1;
             if (item.status === "Da_Cham") counts.graded += 1;
             if (item.status === "Qua_Han") counts.overdue += 1;
         });
-
         return counts;
     }, [items]);
 
@@ -103,33 +100,25 @@ const StudentHomeworkList = () => {
             <div className="row g-3 mb-4">
                 <div className="col-md-3 col-6">
                     <div className="card border-0 rounded-4 shadow-sm h-100 p-3 bg-primary text-white">
-                        <small className="text-uppercase opacity-75 fw-bold">
-                            Tổng bài
-                        </small>
+                        <small className="text-uppercase opacity-75 fw-bold">Tổng bài</small>
                         <h3 className="fw-bold mb-0 mt-2">{summary.total}</h3>
                     </div>
                 </div>
                 <div className="col-md-3 col-6">
                     <div className="card border-0 rounded-4 shadow-sm h-100 p-3 bg-warning text-dark">
-                        <small className="text-uppercase opacity-75 fw-bold">
-                            Chờ nộp
-                        </small>
+                        <small className="text-uppercase opacity-75 fw-bold">Chờ nộp</small>
                         <h3 className="fw-bold mb-0 mt-2">{summary.pending}</h3>
                     </div>
                 </div>
                 <div className="col-md-3 col-6">
                     <div className="card border-0 rounded-4 shadow-sm h-100 p-3 bg-success text-white">
-                        <small className="text-uppercase opacity-75 fw-bold">
-                            Đã chấm
-                        </small>
+                        <small className="text-uppercase opacity-75 fw-bold">Đã chấm</small>
                         <h3 className="fw-bold mb-0 mt-2">{summary.graded}</h3>
                     </div>
                 </div>
                 <div className="col-md-3 col-6">
                     <div className="card border-0 rounded-4 shadow-sm h-100 p-3 bg-danger text-white">
-                        <small className="text-uppercase opacity-75 fw-bold">
-                            Quá hạn
-                        </small>
+                        <small className="text-uppercase opacity-75 fw-bold">Quá hạn</small>
                         <h3 className="fw-bold mb-0 mt-2">{summary.overdue}</h3>
                     </div>
                 </div>
@@ -169,7 +158,8 @@ const StudentHomeworkList = () => {
                                     <th>Hạn nộp</th>
                                     <th>Trạng thái</th>
                                     <th>Điểm</th>
-                                    <th className="pe-4">Nộp lúc</th>
+                                    <th>Nộp lúc</th>
+                                    <th className="pe-4">Thao tác</th>
                                 </tr>
                             </thead>
                             <tbody>
@@ -188,9 +178,7 @@ const StudentHomeworkList = () => {
                                                 </small>
                                             </td>
                                             <td>{item.classCode}</td>
-                                            <td>
-                                                {formatDateTime(item.dueAt)}
-                                            </td>
+                                            <td>{formatDateTime(item.dueAt)}</td>
                                             <td>
                                                 <span
                                                     className={`badge rounded-pill px-3 py-2 ${status.className}`}
@@ -198,14 +186,20 @@ const StudentHomeworkList = () => {
                                                     {status.label}
                                                 </span>
                                             </td>
-                                            <td>
-                                                {item.submission?.diemSo ??
-                                                    "---"}
-                                            </td>
+                                            <td>{item.submission?.diemSo ?? "---"}</td>
+                                            <td>{formatDateTime(item.submission?.ngayNop)}</td>
                                             <td className="pe-4">
-                                                {formatDateTime(
-                                                    item.submission?.ngayNop,
-                                                )}
+                                                <button
+                                                    className="btn btn-outline-primary btn-sm rounded-pill px-3"
+                                                    onClick={() =>
+                                                        navigate(
+                                                            `/student/homework-list/${item.maBaiTap}`,
+                                                        )
+                                                    }
+                                                >
+                                                    <i className="bi bi-eye me-1"></i>
+                                                    Chi tiết
+                                                </button>
                                             </td>
                                         </tr>
                                     );

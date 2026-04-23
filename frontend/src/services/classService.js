@@ -44,9 +44,14 @@ export const classService = {
         return response.data;
     },
 
-    removeStudent: async (classId, studentId) => {
-        const response = await api.delete(`/class/${classId}/removeStudent/${studentId}`);
+    removeStudent: async (classId, studentId, force = false) => {
+        const response = await api.delete(`/class/${classId}/removeStudent/${studentId}${force ? '?force=true' : ''}`);
         classesCache = null;
+        return response.data;
+    },
+
+    checkStudentData: async (classId, studentId) => {
+        const response = await api.get(`/class/${classId}/studentData/${studentId}`);
         return response.data;
     }
 };
